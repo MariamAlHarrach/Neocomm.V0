@@ -400,6 +400,7 @@ class CorticalColumn:
         # self.d = 23  # minicolumn Diameter
         # Layer_d=np.array([165,353+149,190,525,700]) #layers' thicknesses (L1-L2/3-L4-L5-L6)
         self.Layer_d = np.array([165, 353 + 149, 190, 525, 700])  # layers' thicknesses (L1-L2/3-L4-L5-L6)
+        self.Layertop_pos=np.cumsum(np.array([700, 525 , 190, 353+149, 165]))
         # Layer_nbCells=np.array([338/3,7524/3,4656/3,6114/3,12651/3])  #total number of cells/neocortical column for each layer (L1-L2/3-L4-L5-L6)
         self.Layer_nbCells = np.array([322,7524, 4656, 6114,
                                   12651]) / d  # total number of cells/neocortical column for each layer (L1-L2/3-L4-L5-L6)
@@ -1050,6 +1051,7 @@ class CorticalColumn:
         print('Create_Connectivity_Matrices........')
         connectivitymatrix = []
         connectivityweight = []
+        connectivityZpos = []
         self.PreSynaptic_Cell_AMPA = []
         self.PreSynaptic_Cell_GABA = []
         self.PreSynaptic_Soma_AMPA = []
@@ -1074,6 +1076,8 @@ class CorticalColumn:
         cm = np.zeros(nbcells, dtype=int)  # []
         dist = np.zeros(nbcells, dtype=float)  # []
         Weight = np.zeros(nbcells, dtype=float)  # []
+        Zpos = np.zeros(nbcells, dtype=float)  # []
+
         AMPAcells = np.zeros(nbcells, dtype=int) - 1  # []
         GABAcells = np.zeros(nbcells, dtype=int) - 1  # []
 
@@ -1090,6 +1094,8 @@ class CorticalColumn:
                 cm = cm*0
                 dist = dist *0
                 Weight = Weight*0
+                Zpos=Zpos*0 # The Z position of the synaptic connexion (Zpos=0 no connection, Zpos=-1 ==> not enough cells connected)
+
                 AMPAcells = AMPAcells*0-1
                 AMPAcells_sparse = []
                 Weight_AMPA=[]
@@ -1142,6 +1148,9 @@ class CorticalColumn:
                             AMPAcells[index] = -1
                             GABAcells[index] = -1
                             GABASoma[index] = '0'
+                            Zpos[index] = 0
+
+
                         else:
                             #remove auto connections except for PV [Deleuze et al. 2019,plos Bio]
                             if ((v == cell) and (subl == l) and (self.List_celltypes[l][cell] != 1)):
@@ -1150,6 +1159,7 @@ class CorticalColumn:
                                     AMPAcells[index] = -1
                                     GABAcells[index] = -1
                                     GABASoma[index] = '0'
+                                    Zpos[index] =0
 
                             else:
                                 if (self.List_celltypes[subl][v] == 0):  # getsubtype
@@ -1171,18 +1181,25 @@ class CorticalColumn:
                                         subtype = 1  # Chandelier
                                 Neighbor.update_type(type=self.List_celltypes[subl][v], layer=subl,subtype=subtype)
 
-                                isconnected, overlap = self.IsConnected(Neighbor, self.Cellpos[subl][v], target,
+                                isconnected, overlap, ConnPos = self.IsConnected(Neighbor, self.Cellpos[subl][v], target,
                                                                         self.Cellpos[l][cell],d[indflat]) #Neighbor to target)
+                                #find at which layer the dendritic connection is
+                                if ConnPos==0: #not connected
+                                    Layerconn=0
+                                else:
+                                    Layerconn=np.argwhere(np.sort(np.concatenate((self.Layertop_pos,np.array([ConnPos])),axis=0))==ConnPos) #1--> layer 6,5 layer I
+                                    Layerconn =Layerconn[0][0] + 1
+                                    if ConnPos < self.Cellpos[l][cell][2]: #if connection below soma center
+                                        Layerconn=-1*Layerconn
 
 
-                                # print('isconnected')
-                                # print(isconnected)
-                                # print('index')
-                                # print(index)
+
 
                                 if isconnected == 1:
                                     cm[index] = 1
                                     Weight[index] = overlap
+                                    Zpos[index] = Layerconn
+
                                     ####Fill presynatptic cell
                                     if Neighbor.type==0: #excitatory Input
                                         AMPAcells[index] = v+np.sum(Layer_nbCells[subl])
@@ -1209,20 +1226,27 @@ class CorticalColumn:
                                     AMPAcells[index] = -1
                                     GABAcells[index] = -1
                                     GABASoma[index] = '0'
+                                    Zpos[index] = 0
+
 
                         index += 1
                 #####Check afferences:##############
                 Afferences=self.inputpercent[:,int(target.type+5*l)]
+
+                #getminweight
                 Weight2 = Weight[Weight > 0]
                 if Weight2.size == 0:
                     weigthmini = 1
                     print(weigthmini)
                 else:
                     weigthmini = np.min(Weight2)
+
+
                 if np.sum(cm[0:self.NB_RLN[0]]) > Afferences[4]:
                     NBrange = np.array(range(0, self.NB_RLN[0]))
                     th = np.argsort([Weight[j] for j in np.array(NBrange)])[::-1]
-                    Weight[NBrange[th[int(Afferences[4]):]]]=-1
+                    Weight[NBrange[th[int(Afferences[4]):]]]=0
+                    Zpos[NBrange[th[int(Afferences[4]):]]]=0
                     cm[NBrange[th[int(Afferences[4]):]]]=0
                     AMPAcells[NBrange[th[int(Afferences[4]):]]]=-1
                     GABAcells[NBrange[th[int(Afferences[4]):]]]=-1
@@ -1239,6 +1263,7 @@ class CorticalColumn:
                             AMPAcells[pos]=-1
                             GABAcells[pos]=pos
                             GABASoma[pos]='s'
+                            Zpos[pos]= -10
 
 
                 for ll in range(1,5):
@@ -1265,6 +1290,7 @@ class CorticalColumn:
                                     th=np.argsort( Weight[NBrange])[::-1]
                                     ind_th = NBrange[th[int(Afferences[type+5*ll]):]]
                                     Weight[ind_th]=0
+                                    Zpos[ind_th]=0
                                     cm[ind_th]=0
                                     AMPAcells[ind_th]=-1
                                     GABAcells[ind_th]=-1
@@ -1279,6 +1305,7 @@ class CorticalColumn:
                                         if not pos == indexval:
                                             cm[pos] = 1
                                             Weight[pos]=weigthmini
+                                            Zpos[pos] =-10
                                             if type == 0:
                                                 AMPAcells[pos] = pos
                                                 GABAcells[pos] = -1
@@ -1337,6 +1364,7 @@ class CorticalColumn:
 
                 connectivitymatrix.append(np.where(cm==1)[0])
                 connectivityweight.append(Weight[np.where(cm==1)])
+                connectivityZpos.append(Zpos[np.where(cm==1)])
                 #create external synaptic input
                 nbstim=int(Afferences[26])
                 nbth=int(Afferences[25])
@@ -1468,7 +1496,10 @@ class CorticalColumn:
     def IsConnected(self,Source,Sourcepos,Target,Targetpos,d):
         step = 10.  # micrometeres
         connected = 0
+        MeanPos =0
         overlap = 0.0
+        DendConn = 0
+        ConnPos = []
         if Source.type in [0, 3, 4]:  # PC/ VIP or RLN
             S_Z0 = Sourcepos[2] + Source.AX_down # lower threshold
             S_Z1 = Sourcepos[2] + Source.AX_up  # upper threshold
@@ -1480,55 +1511,90 @@ class CorticalColumn:
 
             # if PC ---> PC ----> #dendrite targeting
             if Target.type == 0:  # PC
+                DendConn = 1
                 if Target.subtype in [1,2]:  # IPC or UPC
                     # first cylinder
                     T_Z0_n = Targetpos[2] + Target.c1_down
                     T_Z1_n = Targetpos[2] + Target.c1_up
-                    overlap += self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r1, d)
+                    o= self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r1, d)
+                    overlap += o
+                    if o>0:
+                        ConnPos.append(np.mean([np.max([S_Z0,T_Z0_n]),np.min([S_Z1,T_Z1_n])]))
+
+
+
 
                     #  second cylinder
                     T_Z0_n = Targetpos[2] + Target.c2_down
                     T_Z1_n = Targetpos[2] + Target.c2_up
-                    overlap += self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r2, d)
+                    o= self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r2, d)
+                    overlap += o
+                    if o>0:
+                        ConnPos.append(np.mean([np.max([S_Z0,T_Z0_n]),np.min([S_Z1,T_Z1_n])]))
+
+
+
+
 
 
                 elif Target.subtype == 3:  # BPC
                     # cylinder
                     T_Z0_n = Targetpos[2] + Target.c1_down
                     T_Z1_n = Targetpos[2] + Target.c1_up
-                    overlap = self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.Adend_w, d)
+                    o=self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.Adend_w, d)
+                    overlap += o
+                    if o>0:
+                        ConnPos.append(np.mean([np.max([S_Z0,T_Z0_n]),np.min([S_Z1,T_Z1_n])]))
 
                     # cylinder haut
                     T_Z0_n = Targetpos[2] + Target.c2_down
                     T_Z1_n = Targetpos[2] + Target.c2_up
-                    overlap += self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, 10, d)
+                    o= self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, 10, d)
+                    overlap += o
+                    if o>0:
+                        ConnPos.append(np.mean([np.max([S_Z0,T_Z0_n]),np.min([S_Z1,T_Z1_n])]))
 
                     # cylinder bas
                     T_Z0_n = Targetpos[2] + Target.c3_down
                     T_Z1_n = Targetpos[2] + Target.c3_up
-                    overlap += self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, 10, d)
-
+                    o= self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, 10, d)
+                    overlap += o
+                    if o>0:
+                        ConnPos.append(np.mean([np.max([S_Z0,T_Z0_n]),np.min([S_Z1,T_Z1_n])]))
 
                 elif Target.subtype == 4:  # SSC
                     T_Z0_n = Targetpos[2] + Target.c1_down
                     T_Z1_n = Targetpos[2] + Target.c1_up
-                    overlap += self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.Bdend_w, d)
+                    o= self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.Bdend_w, d)
+                    overlap += o
+                    if o>0:
+                        ConnPos.append(np.mean([np.max([S_Z0,T_Z0_n]),np.min([S_Z1,T_Z1_n])]))
 
 
                 elif Target.subtype == 0: # TPC
                     # first cylinder
                     T_Z0_n = Targetpos[2] + Target.c1_down
                     T_Z1_n = Targetpos[2] + Target.c1_up
-                    overlap += self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r1, d)
+                    o= self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r1, d)
+                    overlap += o
+                    if o>0:
+                        ConnPos.append(np.mean([np.max([S_Z0,T_Z0_n]),np.min([S_Z1,T_Z1_n])]))
 
                     #  second cylinder
                     T_Z0_n = Targetpos[2] + Target.c2_down
                     T_Z1_n = Targetpos[2] + Target.c2_up
-                    overlap += self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r2, d)
+                    o= self.find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r2, d)
+                    overlap += o
+                    if o>0:
+                        ConnPos.append(np.mean([np.max([S_Z0,T_Z0_n]),np.min([S_Z1,T_Z1_n])]))
+
                     #  cone
                     T_Z0_n = Targetpos[2] + Target.c3_down
                     T_Z1_n = Targetpos[2] + Target.c3_up
-                    overlap += self.find_conic_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w / 2, Target.r3, d, step, 0)
+                    o= self.find_conic_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w / 2, Target.r3, d, step, 0)
+                    overlap += o
+                    if o>0:
+                        ConnPos.append(np.mean([np.max([S_Z0,T_Z0_n]),np.min([S_Z1,T_Z1_n])]))
 
 
             elif Target.type in [1, 2, 3, 4]:  # PV, SST, VIP or RLN
@@ -1604,21 +1670,38 @@ class CorticalColumn:
                 Sbot_Z1 = self.L+0.
 
             if Target.type == 0:  # SST -> PC
+                DendConn = 1
+
                 if Target.subtype in [1, 2]:  # IPC or UPC
                     # first cylinder
                     T_Z0_n = Targetpos[2] + Target.c1_down
                     T_Z1_n = Targetpos[2] + Target.c1_up
 
-                    overlap += self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r1, d)
-                    overlap += self.find_conic_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2 , Target.r1, d, step, 0)
+                    o = self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r1, d)
+                    overlap +=o
+                    if o>0:
+                        ConnPos.append(np.mean([np.max([Sbot_Z0,T_Z0_n]),np.min([Sbot_Z1,T_Z1_n])]))
+                    o= self.find_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2, Target.r1, d)
+                    overlap += o
+                    if o>0:
+                        ConnPos.append(np.mean([np.max([Stop_Z0, T_Z0_n]), np.min([Stop_Z1, T_Z1_n])]))
+
 
                     # cylinder
                     T_Z0_n = Targetpos[2] + Target.c2_down
                     T_Z1_n = Targetpos[2] + Target.c2_up
                     #first axon
-                    overlap += self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r2, d)
+                    o = self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r2, d)
+                    overlap += o
+                    if o>0:
+                        ConnPos.append(np.mean([np.max([Sbot_Z0, T_Z0_n]), np.min([Sbot_Z1, T_Z1_n])]))
+
                     #second axon
-                    overlap += self.find_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2 , Target.r2, d)
+                    o = self.find_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2, Target.r2, d)
+                    overlap += o
+                    if o>0:
+                        ConnPos.append(np.mean([np.max([Stop_Z0, T_Z0_n]), np.min([Stop_Z1, T_Z1_n])]))
+
 
 
                 elif Target.subtype == 3:  # BPC
@@ -1626,48 +1709,103 @@ class CorticalColumn:
                     T_Z0_n = Targetpos[2] + Target.c1_down
                     T_Z1_n = Targetpos[2] + Target.c1_up
                     #first axon
-                    overlap += self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.Adend_w, d)
+                    o= self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.Adend_w, d)
+                    overlap += o
+                    if o>0:
+                        ConnPos.append(np.mean([np.max([Sbot_Z0,T_Z0_n]),np.min([Sbot_Z1,T_Z1_n])]))
+
                     #second axon
-                    overlap += self.find_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2 , Target.Adend_w, d)
+                    o= self.find_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2 , Target.Adend_w, d)
+                    overlap += o
+                    if o > 0:
+                        ConnPos.append(np.mean([np.max([Stop_Z0, T_Z0_n]), np.min([Stop_Z1, T_Z1_n])]))
+
                     # cylinder bas
                     T_Z0_n = Targetpos[2] + Target.c2_down
                     T_Z1_n = Targetpos[2] + Target.c2_up
-                    overlap += self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r2, d)
-                    overlap += self.find_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2 , Target.r2, d)
+                    o= self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r2, d)
+                    overlap += o
+                    if o > 0:
+                        ConnPos.append(np.mean([np.max([Sbot_Z0, T_Z0_n]), np.min([Sbot_Z1, T_Z1_n])]))
+
+                    o= self.find_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2 , Target.r2, d)
+                    overlap += o
+                    if o > 0:
+                        ConnPos.append(np.mean([np.max([Stop_Z0, T_Z0_n]), np.min([Stop_Z1, T_Z1_n])]))
+
                     # cylinder haut
                     T_Z0_n = Targetpos[2] + Target.c3_down
                     T_Z1_n = Targetpos[2] + Target.c3_up
 
-                    overlap += self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r2,d)
-                    overlap += self.find_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2, Target.r2,d)
+                    o= self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r2,d)
+                    overlap += o
+                    if o > 0:
+                        ConnPos.append(np.mean([np.max([Sbot_Z0, T_Z0_n]), np.min([Sbot_Z1, T_Z1_n])]))
+
+                    o= self.find_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2, Target.r2,d)
+                    overlap += o
+                    if o > 0:
+                        ConnPos.append(np.mean([np.max([Stop_Z0, T_Z0_n]), np.min([Stop_Z1, T_Z1_n])]))
+
 
 
                 elif Target.subtype == 4:  # SSC
                     T_Z0_n = Targetpos[2] + Target.c1_down
                     T_Z1_n = Targetpos[2] + Target.c1_up
 
-                    overlap += self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.Bdend_w,d)
-                    overlap += self.find_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2, Target.Bdend_w, d)
+                    o= self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.Bdend_w,d)
+                    overlap += o
+                    if o > 0:
+                        ConnPos.append(np.mean([np.max([Sbot_Z0, T_Z0_n]), np.min([Sbot_Z1, T_Z1_n])]))
+
+                    o= self.find_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2, Target.Bdend_w, d)
+                    overlap += o
+                    if o > 0:
+                        ConnPos.append(np.mean([np.max([Stop_Z0, T_Z0_n]), np.min([Stop_Z1, T_Z1_n])]))
+
 
 
                 elif Target.subtype == 0:  # TPC
                     # first cylinder
                     T_Z0_n = Targetpos[2] + Target.c1_down
                     T_Z1_n = Targetpos[2] + Target.c1_up
-                    overlap += self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r1, d)
-                    overlap += self.find_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2, Target.r1, d)
+                    o = self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r1, d)
+                    overlap += o
+                    if o > 0:
+                        ConnPos.append(np.mean([np.max([Sbot_Z0, T_Z0_n]), np.min([Sbot_Z1, T_Z1_n])]))
+
+                    o = self.find_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2, Target.r1, d)
+                    overlap += o
+                    if o > 0:
+                        ConnPos.append(np.mean([np.max([Stop_Z0, T_Z0_n]), np.min([Stop_Z1, T_Z1_n])]))
+
 
 
                     # cylinder
                     T_Z0_n = Targetpos[2] + Target.c2_down
                     T_Z1_n = Targetpos[2] + Target.c2_up
-                    overlap += self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r2, d)
-                    overlap += self.find_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2, Target.r2, d)
+                    o= self.find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r2, d)
+                    overlap += o
+                    if o > 0:
+                        ConnPos.append(np.mean([np.max([Sbot_Z0, T_Z0_n]), np.min([Sbot_Z1, T_Z1_n])]))
+
+                    o= self.find_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2, Target.r2, d)
+                    overlap += o
+                    if o > 0:
+                        ConnPos.append(np.mean([np.max([Stop_Z0, T_Z0_n]), np.min([Stop_Z1, T_Z1_n])]))
+
                     # cone
                     T_Z0_n = Targetpos[2]  + Target.c3_down
                     T_Z1_n = Targetpos[2] + Target.c3_up
-                    overlap += self.find_conic_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r3, d, step, 0)
-                    overlap += self.find_conic_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2, Target.r3, d, step, 0)
+                    o = self.find_conic_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r3, d, step, 0)
+                    overlap += o
+                    if o > 0:
+                        ConnPos.append(np.mean([np.max([Sbot_Z0, T_Z0_n]), np.min([Sbot_Z1, T_Z1_n])]))
+
+                    o = self.find_conic_intersection_high_vectorize(Stop_Z0, Stop_Z1, T_Z0_n, T_Z1_n, Source.AX_w2, Target.r3, d, step, 0)
+                    overlap +=o
+                    if o > 0:
+                        ConnPos.append(np.mean([np.max([Stop_Z0, T_Z0_n]), np.min([Stop_Z1, T_Z1_n])]))
 
 
             #     # if SST--->PV
@@ -1679,422 +1817,16 @@ class CorticalColumn:
 
         if overlap > 0:
             connected = 1
+            if DendConn==1:
+                MeanPos=np.mean(ConnPos)
+            else:
+                MeanPos=0
 
         ################
         #        print(connected)
         #        print(overlap)
-        return connected, overlap
+        return connected, overlap,MeanPos
 
-    def IsConnected_old(self,source,sourcepos,Neighbor,neighpos,d):
-        step = 10  # micrometeres
-        connected = 0
-        overlap = 0.0
-        if source.type == 0:  # PC
-            Z1 = int(sourcepos[2] + source.AX_l * 1 / 3)  # upper threshold
-            Z0 = int(sourcepos[2] - source.AX_l * 2 / 3)  # lower threshold
-
-            # if Z0 <0:#kepp axon in the cortical columnlength
-            #     Z0=0
-
-            # if PC ---> PC ----> #dendrite targeting
-            if Neighbor.type == 0:  # PC
-                if Neighbor.subtype == 2:  # IPC
-                    Z0_n = neighpos[2] - Neighbor.Adend_l
-                    Z1_n = neighpos[2]
-
-                elif Neighbor.subtype == 3:  # BPC
-                    Z0_n = neighpos[2] - Neighbor.Adend_l * 1 / 4
-                    Z1_n = neighpos[2] + Neighbor.Adend_l * 3 / 4
-
-                elif Neighbor.subtype == 4:  # SSC
-                    Z0_n = neighpos[2] - Neighbor.Bdend_l / 2
-                    Z1_n = neighpos[2] + Neighbor.Bdend_l / 2
-
-                elif (Neighbor.subtype == 0) | (Neighbor.subtype == 1):  # UPC or TPC
-                    Z0_n = neighpos[2]
-                    Z1_n = neighpos[2] + Neighbor.Adend_l
-
-                # if Z0_n<0:
-                #     Z0_n=0
-                # if Z1_n>self.L:
-                #     Z1_n=self.L
-
-                # d = np.linalg.norm(sourcepos[:2] - neighpos[:2])
-                AX_w2 = source.AX_w / 2
-
-                # for z in range(Z0, Z1, step):
-                #     if (z < Z1_n) & (z > Z0_n):
-                #         max_widt = self.Get_max_width(Neighbor, z, Z0_n)
-                #         if not max_widt is None:
-                #             if d < (AX_w2 + max_widt):
-                #                 overlap = overlap + (AX_w2 + max_widt - d) * step
-                #                 connected = 1
-
-
-                z = np.arange(Z0, Z1, step)
-                z = z[np.bitwise_and(z < Z1_n, z > Z0_n)]
-                if len(z) > 0:
-                    Ax_w = np.ones(z.shape) * source.AX_w
-                    Ax_w[z > Z1 - self.Layer_d[0]] = source.AX_w * 3
-                    max_widt = self.Get_max_width_vect2(Neighbor, z, Z0_n)
-                    max_widt = max_widt[d < (AX_w2 + max_widt)]
-                    overlap = np.sum((AX_w2 + max_widt - d) * step)
-                    if overlap > 0:
-                        connected = 1
-
-            # if PC--->PV
-            elif Neighbor.type == 1:  # PV insidelayer
-                if Neighbor.subtype == 0:  # basket
-                    sum1 = np.sum(self.Layer_d[0:Neighbor.layer])
-                    sum2 = np.sum(self.Layer_d[0:Neighbor.layer + 1])
-                    # d = np.linalg.norm(sourcepos[:2] - neighpos[:2])
-                    o = (source.AX_w / 2 + Neighbor.Bdend_w - d) * step
-                    AX_w2 = source.AX_w / 2
-                    # for z in range(Z0, Z1, step):
-                    #     if (z < (self.L - sum1)) & (z > (self.L - sum2)):
-                    #         if d < (AX_w2 + Neighbor.Bdend_w):
-                    #             overlap = overlap + o
-                    #             connected = 1
-
-                    z = np.arange(Z0, Z1, step)
-                    z = z[np.bitwise_and(z < (self.L - sum1), z > (self.L - sum2))]
-                    if len(z) > 0:
-                        overlap = o * np.sum(d < (AX_w2 + Neighbor.Bdend_w))
-                        if overlap > 0:
-                            connected = 1
-                else:  # chandelier cell
-                    o = (source.AX_w / 2 + Neighbor.Bdend_w / 2 - d) * step
-                    AX_w2 = source.AX_w / 2
-                    z = np.arange(Z0, Z1, step)
-                    z = z[np.bitwise_and((z < Neighbor.Bdend_l + neighpos[2]),
-                                         (z > (neighpos[2])))]
-                    if len(z) > 0:
-                        overlap = o * np.sum(d < (AX_w2 + Neighbor.Bdend_w / 2))
-                        if overlap > 0:
-                            connected = 1
-
-            elif Neighbor.type in [2, 4]:  # SST or RLN
-                # d = np.linalg.norm(sourcepos[:2] - neighpos[:2])
-                o = (source.AX_w / 2 + Neighbor.Bdend_w / 2 - d) * step
-                AX_w2 = source.AX_w / 2
-                # for z in range(Z0, Z1, step):
-                #     if (z < Neighbor.Bdend_l / 2 + neighpos[2]) & (z > (-Neighbor.Bdend_l / 2 + neighpos[2])):
-                #         if d < (AX_w2 + Neighbor.Bdend_w / 2):
-                #             overlap = overlap + o
-                #             connected = 1
-
-                z = np.arange(Z0, Z1, step)
-                z = z[np.bitwise_and((z < Neighbor.Bdend_l / 2 + neighpos[2]), (z > (-Neighbor.Bdend_l / 2 + neighpos[2])))]
-                if len(z) > 0:
-                    overlap = o * np.sum(d < (AX_w2 + Neighbor.Bdend_w / 2))
-                    if overlap > 0:
-                        connected = 1
-
-            elif Neighbor.type in [3]:  # VIP
-                # d = np.linalg.norm(sourcepos[:2] - neighpos[:2])
-                o = (source.AX_w / 2 + Neighbor.Bdend_w / 2 - d) * step
-                AX_w2 = source.AX_w / 2
-                # for z in range(Z0, Z1, step):
-                #     if (z < self.L) & (z > (neighpos[2] - 150)):
-                #         if d < (AX_w2 + Neighbor.Bdend_w / 2):
-                #             overlap = overlap + o
-                #             connected = 1
-
-                z = np.arange(Z0, Z1, step)
-                z = z[np.bitwise_and((z < self.L), (z > (neighpos[2] - 150)))]
-                if len(z) > 0:
-                    overlap = o * np.sum(d < (AX_w2 + Neighbor.Bdend_w / 2))
-                    if overlap > 0:
-                        connected = 1
-
-
-        ###interneurons
-        ###PV
-        elif source.type == 1:  # PV
-
-            if source.subtype == 0:  # BC  only inside the layer
-                Z1 = int(sourcepos[2] + source.AX_l / 2)
-                Z0 = int(sourcepos[2] - source.AX_l / 2)
-
-                if Neighbor.type == 0:  # PV-->PC targetssoma
-                    if (Neighbor.layer == 2) & (Neighbor.subtype == 4):
-                        Z0_n = neighpos[2] - Neighbor.Bdend_l / 4
-                        Z1_n = neighpos[2] + Neighbor.Bdend_l / 4
-                    else:
-                        Z0_n = neighpos[2] - Neighbor.Bdend_l / 2
-                        Z1_n = neighpos[2] + Neighbor.hsoma
-
-                    o = (Neighbor.Bdend_w / 4 + source.AX_w / 2 - d) * step
-                    f2 = Neighbor.Bdend_w / 4 + source.AX_w / 2
-                    if d < f2:
-                        z = np.arange(Z0, Z1, step)
-                        overlap = o * np.sum(np.bitwise_and(z < Z1_n, z > Z0_n))
-                        if overlap > 0:
-                            connected = 1
-
-                elif Neighbor.type == 1:  # PV-->PV
-                    Z0_n = neighpos[2] - Neighbor.Bdend_l / 2
-                    Z1_n = neighpos[2] + Neighbor.Bdend_l / 2
-
-                    # d = np.linalg.norm(sourcepos[:2] - neighpos[:2])
-                    o = (Neighbor.Bdend_w / 2 + source.AX_w / 2 - d) * step
-                    f2 = Neighbor.Bdend_w / 2 + source.AX_w / 2
-                    # for z in range(Z0, Z1, step):
-                    #     if (z < Z1_n) & (z > Z0_n):
-                    #         if d < f2:
-                    #             overlap = overlap + o
-                    #             connected = 1
-
-                    if d < f2:
-                        z = np.arange(Z0, Z1, step)
-                        overlap = o * np.sum(np.bitwise_and(z < Z1_n, z > Z0_n))
-                        if overlap > 0:
-                            connected = 1
-
-        ####
-        # SST
-        elif source.type == 2:  # SST
-            Z1 = int(self.L - sourcepos[2])
-            Z0 = int(sourcepos[2] - source.Bdend_l / 4)
-            if Neighbor.type == 0:  # PC
-                if Neighbor.subtype == 2:  # IPC
-                    Z0_n = neighpos[2] - Neighbor.Adend_l
-                    Z1_n = neighpos[2]
-
-                elif Neighbor.subtype == 3:  # BPC
-                    Z0_n = neighpos[2] - Neighbor.Adend_l * 1 / 4
-                    Z1_n = neighpos[2] + Neighbor.Adend_l * 3 / 4
-
-                elif Neighbor.subtype == 4:  # SSC
-                    Z0_n = neighpos[2] - Neighbor.Bdend_l / 2
-                    Z1_n = neighpos[2] + Neighbor.Bdend_l / 2
-
-                elif (Neighbor.subtype == 0) | (Neighbor.subtype == 1):  # UPC or TPC
-                    Z0_n = neighpos[2]
-                    Z1_n = neighpos[2] + Neighbor.Adend_l
-
-                # if Z0_n < 0:
-                #     Z0_n = 0
-                # if Z1_n > self.L:
-                #     Z1_n = self.L
-                #
-                # d = np.linalg.norm(sourcepos[:2] - neighpos[:2])
-                # for z in range(Z0, Z1, step):
-                #     if z > Z1 - self.Layer_d[0]:  # if at layer 1widthx3
-                #         Ax_w = source.AX_w * 3
-                #     else:
-                #         Ax_w = source.AX_w
-                #     if (z < Z1_n) & (z > Z0_n):
-                #         max_widt = self.Get_max_width(Neighbor, z, Z0_n)
-                #         if not max_widt is None:
-                #             if d < (Ax_w / 2 + max_widt):
-                #                 overlap = overlap + (Ax_w / 2 + max_widt - d) * step
-                #                 connected = 1
-
-                z = np.arange(Z0, Z1, step)
-                z = z[np.bitwise_and(z < Z1_n, z > Z0_n)]
-                if len(z) > 0:
-                    Ax_w = np.ones(z.shape) * source.AX_w
-                    Ax_w[z > Z1 - self.Layer_d[0]] = source.AX_w * 3
-                    max_widt = self.Get_max_width_vect2(Neighbor, z, Z0_n)
-
-                    overlap = np.sum((Ax_w[d < (Ax_w / 2 + max_widt)] / 2 + max_widt[d < (Ax_w / 2 + max_widt)] - d) * step)
-                    if overlap > 0:
-                        connected = 1
-
-                # if PC--->PV
-            elif Neighbor.type == 1:  # PV insidelayer
-                # d = np.linalg.norm(sourcepos[:2] - neighpos[:2])
-                sum1 = np.sum(self.Layer_d[0:Neighbor.layer])
-                sum2 = np.sum(self.Layer_d[0:Neighbor.layer + 1])
-                Z1mLayer_d = Z1 - self.Layer_d[0]
-                # for z in range(Z0, Z1, step):
-                #     if z > Z1mLayer_d:  # if at layer 1widthx3
-                #         Ax_w = source.AX_w * 3
-                #     else:
-                #         Ax_w = source.AX_w
-                #     if (z < (self.L - sum1)) & (z > (self.L - sum2)):
-                #         if d < (Ax_w / 2 + Neighbor.Bdend_w):
-                #             overlap = overlap + (Ax_w / 2 + Neighbor.Bdend_w - d) * step
-                #             connected = 1
-
-                z = np.arange(Z0, Z1, step)
-                z = z[np.bitwise_and((z < (self.L - sum1)), (z > (self.L - sum2)))]
-                if len(z) > 0:
-                    Ax_w = np.ones(z.shape) * source.AX_w
-                    Ax_w[z > Z1mLayer_d] = source.AX_w * 3
-                    overlap = np.sum((Ax_w[d < (Ax_w / 2 + Neighbor.Bdend_w)] / 2 + Neighbor.Bdend_w - d) * step)
-                    if overlap > 0:
-                        connected = 1
-
-
-            elif Neighbor.type in [2, 4]:  # SST or RLN
-                # d = np.linalg.norm(sourcepos[:2] - neighpos[:2])
-                Z1mLayer_d = Z1 - self.Layer_d[0]
-                Bdend_l2 = Neighbor.Bdend_l / 2 + neighpos[2]
-                Bdend_l3 = -Neighbor.Bdend_l / 2 + neighpos[2]
-                Bdend_w2 = Neighbor.Bdend_w / 2 - d
-                # for z in range(Z0, Z1, step):
-                #     if z > Z1mLayer_d:  # if at layer 1widthx3
-                #         Ax_w = source.AX_w * 3
-                #     else:
-                #         Ax_w = source.AX_w
-                #     if (z < Bdend_l2) & (z > (Bdend_l3)):
-                #         if d < (Ax_w / 2 + Neighbor.Bdend_w):
-                #             overlap = overlap + (Ax_w / 2 + Bdend_w2) * step
-                #             connected = 1
-
-                z = np.arange(Z0, Z1, step)
-                z = z[np.bitwise_and((z < Bdend_l2), (z > (Bdend_l3)))]
-                if len(z) > 0:
-                    Ax_w = np.ones(z.shape) * source.AX_w
-                    Ax_w[z > Z1mLayer_d] = source.AX_w * 3
-                    overlap = np.sum((Ax_w[d < (Ax_w / 2 + Neighbor.Bdend_w)] / 2 + Bdend_w2) * step)
-                    if overlap > 0:
-                        connected = 1
-
-            elif Neighbor.type in [3]:  # VIP
-                # d = np.linalg.norm(sourcepos[:2] - neighpos[:2])
-                Z1mLayer_d = Z1 - self.Layer_d[0]
-                p = (neighpos[2] - 150)
-                n = Neighbor.Bdend_w / 2 - d
-                # for z in range(Z0, Z1, step):
-                #     if z > Z1mLayer_d:  # if at layer 1widthx3
-                #         Ax_w = source.AX_w * 3
-                #     else:
-                #         Ax_w = source.AX_w
-                #     if (z < self.L) & (z > p):
-                #         if d < (Ax_w / 2 + Neighbor.Bdend_w / 2):
-                #             overlap = overlap + (Ax_w / 2 + n) * step
-                #             connected = 1
-
-                z = np.arange(Z0, Z1, step)
-                z = z[np.bitwise_and((z < self.L), (z > p))]
-                if len(z) > 0:
-                    Ax_w = np.ones(z.shape) * source.AX_w
-                    Ax_w[z > Z1mLayer_d] = source.AX_w * 3
-                    overlap = np.sum((Ax_w[d < (Ax_w / 2 + Neighbor.Bdend_w / 2)] / 2 + n) * step)
-                    if overlap > 0:
-                        connected = 1
-
-        ####
-        # VIP onlyy ---> SST
-        elif source.type == 3:
-            Z1 = int(sourcepos[2])
-            Z0 = 0
-            # d = np.linalg.norm(sourcepos[:2] - neighpos[:2])
-            o = (source.AX_w / 2 + Neighbor.Bdend_w / 2 - d) * step
-            Bdend_l2 = Neighbor.Bdend_l / 2 + neighpos[2]
-            Bdend_l3 = -Neighbor.Bdend_l / 2 + neighpos[2]
-            if d < (source.AX_w / 2 + Neighbor.Bdend_w / 2):
-                if Neighbor.type == 2:
-                    # for z in range(Z0, Z1, step):
-                    #     if (z < Bdend_l2) & (z > (Bdend_l3)):
-                    #         overlap = overlap + o
-                    #         connected = 1
-
-                    z = np.arange(Z0, Z1, step)
-                    overlap = o * np.sum(np.bitwise_and(z < Bdend_l2, z > (Bdend_l3)))
-                    if overlap > 0:
-                        connected = 1
-
-        # RLN ---> all others
-        elif source.type == 4:
-            Z0 = int(sourcepos[2] - source.Bdend_l / 2)
-            Z1 = int(sourcepos[2] + source.Bdend_l / 2)
-            if Neighbor.type == 0:  # PC
-                Z0_n = 0
-                Z1_n = self.L
-                if Neighbor.subtype == 2:  # IPC
-                    Z0_n = neighpos[2] - Neighbor.Adend_l
-                    Z1_n = neighpos[2]
-
-                elif Neighbor.subtype == 3:  # BPC
-                    Z0_n = neighpos[2] - Neighbor.Adend_l * 1 / 4
-                    Z1_n = neighpos[2] + Neighbor.Adend_l * 3 / 4
-
-                elif Neighbor.subtype == 4:  # SSC
-                    Z0_n = neighpos[2] - Neighbor.Bdend_l / 2
-                    Z1_n = neighpos[2] + Neighbor.Bdend_l / 2
-
-                elif (Neighbor.subtype == 0) | (Neighbor.subtype == 1):  # UPC or TPC
-                    Z0_n = neighpos[2]
-                    Z1_n = neighpos[2] + Neighbor.Adend_l
-
-                # if Z0_n < 0:
-                #     Z0_n = 0
-                # if Z1_n > self.L:
-                #     Z1_n = self.L
-
-                # d = np.linalg.norm(sourcepos[:2] - neighpos[:2])
-                # for z in range(Z0, Z1, step):
-                #     if (z < Z1_n) & (z > Z0_n):
-                #         max_widt = self.Get_max_width(Neighbor, z, Z0_n)
-                #         if not max_widt is None:
-                #             if d < (source.AX_w / 2 + max_widt):
-                #                 overlap = overlap + (source.AX_w / 2 + max_widt - d) * step
-                #                 connected = 1
-                z = np.arange(Z0, Z1, step)
-                z = z[np.bitwise_and(z < Z1_n, z > Z0_n)]
-                if len(z)>0:
-                    max_widt = self.Get_max_width_vect2(Neighbor, z, Z0_n)
-                    max_widt = max_widt[d < (source.AX_w / 2 + max_widt)]
-                    overlap = np.sum((source.AX_w / 2 + max_widt - d) * step)
-                    if overlap > 0:
-                        connected = 1
-
-
-                # if PC--->PV
-            elif Neighbor.type == 1:  # PV insidelayer
-                # d = np.linalg.norm(sourcepos[:2] - neighpos[:2])
-                o = (source.AX_w / 2 + Neighbor.Bdend_w - (sourcepos[0] - neighpos[0])) * step
-                sum1 = (self.L - np.sum(self.Layer_d[0:Neighbor.layer]))
-                sum2 = (self.L - np.sum(self.Layer_d[0:Neighbor.layer + 1]))
-                if d < (source.AX_w / 2 + Neighbor.Bdend_w):
-                    # for z in range(Z0, Z1, step):
-                    #     if (z < sum1) & (z > sum2):
-                    #         overlap = overlap + o
-                    #         connected = 1
-
-                    z = np.arange(Z0, Z1, step)
-                    overlap = o * np.sum(np.bitwise_and(z < sum1, z > sum2))
-                    if overlap > 0:
-                        connected = 1
-
-            elif Neighbor.type in [2, 4]:  # SST or RLN
-                # d = np.linalg.norm(sourcepos[:2] - neighpos[:2])
-                o = (source.AX_w / 2 + Neighbor.Bdend_w / 2 - d) * step
-                Bdend_l2 = Neighbor.Bdend_l / 2 + neighpos[2]
-                Bdend_l3 = (-Neighbor.Bdend_l / 2 + neighpos[2])
-                if d < (source.AX_w / 2 + Neighbor.Bdend_w / 2):
-                    # for z in range(Z0, Z1, step):
-                    #     if (z < Bdend_l2) & (z > Bdend_l3):
-                    #         overlap = overlap + o
-                    #         connected = 1
-
-                    z = np.arange(Z0, Z1, step)
-                    overlap = o * np.sum(np.bitwise_and(z < Bdend_l2, z > Bdend_l3))
-                    if overlap > 0:
-                        connected = 1
-
-            elif Neighbor.type in [3]:  # VIP
-                # d = np.linalg.norm(sourcepos[:2] - neighpos[:2])
-                o = (source.AX_w / 2 + Neighbor.Bdend_w / 2 - d) * step
-                d2 = (neighpos[2] - 150)
-                if d < (source.AX_w / 2 + Neighbor.Bdend_w / 2):
-                    # for z in range(Z0, Z1, step):
-                    #     if (z < self.L) & (z > d2):
-                    #         overlap = overlap + o
-                    #         connected = 1
-                    z = np.arange(Z0, Z1, step)
-                    overlap = o * np.sum(np.bitwise_and(z < self.L, z > d2))
-                    if overlap > 0:
-                        connected = 1
-
-        ################
-        #        print(connected)
-        #        print(overlap)
-        return connected, overlap
 
     def Get_max_width_vect(self, Cell, z, Z0):
         d = z - Z0
@@ -2215,47 +1947,7 @@ class CorticalColumn:
                     else:
                         return 4
 
-# #   def Compute_synaptic_connections_sparse(self):
-# #       ####Get
-#      self.PreSynaptic_Cell_AMPA = []
-#        self.PreSynaptic_Cell_GABA = []
-#        self.PreSynaptic_Soma_Dend_AMPA = []
-#        self.PreSynaptic_Soma_Dend_AMPA_not = []
-#        self.PreSynaptic_Soma_Dend_GABA = []
-#        self.PreSynaptic_Soma_Dend_GABA_not = []
-#        for i, c in enumerate(self.List_celltypes):
-#            convect = self.ConnectivityMatrix[i]
-#            convect_AMPA = []
-#            convect_GABA = []
-#           convect_Soma_Dend_AMPA = []
-#            convect_Soma_Dend_GABA = []
-#            for k in convect:
-#                if self.List_Neurone_type[k] in [1, 2]:  # si from CA1 ou CA3
-#                    convect_AMPA.append(k)
-#                    if c in [3, 4, 5]:  # interneurones
-#                        convect_Soma_Dend_AMPA.append(1)
-#                    else:
-#                        if self.List_Neurone_type[k] in [1, 2, 4, 5]:  # si from CA1, CA3, SOM, ou BIS
-#                            convect_Soma_Dend_AMPA.append(0)
-#                        else:  # si from BAS
-#                            convect_Soma_Dend_AMPA.append(1)
-#
-#                else:  # from interneurone
-#                    convect_GABA.append(k)
-#                   if c in [3, 4, 5]:  # interneurones
-#                        convect_Soma_Dend_GABA.append(1)
-#                    else:
-#                        if self.List_Neurone_type[k] in [1, 2, 4, 5]:  # si from CA1, CA3, SOM, ou BIS
-#                            convect_Soma_Dend_GABA.append(0)
-#                        else:  # si from BAS
-#                            convect_Soma_Dend_GABA.append(1)
 
-#            self.PreSynaptic_Cell_AMPA.append(convect_AMPA)
-#            self.PreSynaptic_Cell_GABA.append(convect_GABA)
-#            self.PreSynaptic_Soma_Dend_AMPA.append(np.array(convect_Soma_Dend_AMPA))
-#            self.PreSynaptic_Soma_Dend_AMPA_not.append(np.abs(np.array(convect_Soma_Dend_AMPA) - 1))
-#            self.PreSynaptic_Soma_Dend_GABA.append(np.array(convect_Soma_Dend_GABA))
-#            self.PreSynaptic_Soma_Dend_GABA_not.append(np.abs(np.array(convect_Soma_Dend_GABA) - 1))
 
     def All2layer(self, indexall, NB_Cells, NB_pyr, NB_PV, NB_SST, NB_VIP, NB_RLN,celltype):  # tranform index of a cell in the network into layer and index in the layer
         layer = []
@@ -2277,10 +1969,6 @@ class CorticalColumn:
             layer = 4
             new_i = indexall - np.sum(NB_Cells[0:4])
 
-#        print('indexall',indexall)
-#        print('layer',layer)
-#        print('indexl',new_i)
-
 
         type = int(celltype[layer][new_i])
 
@@ -2295,16 +1983,7 @@ class CorticalColumn:
             i = new_i + np.sum(NB_VIP[0:layer]) - np.sum(NB_pyr[layer]) - np.sum(NB_PV[layer]) - np.sum(NB_SST[layer])
         if type == 4:  # RLN
             i = new_i + np.sum(NB_RLN[0:layer]) - np.sum(NB_pyr[layer]) - np.sum(NB_PV[layer]) - np.sum(NB_SST[layer]) - np.sum(NB_VIP[layer])
-            #print(new_i)
-            #print(np.sum(NB_RLN[0:layer]))
-            #print(i)
 
-
-#        print('indexall', indexall)
-#        print('layer', layer)
-#        print('type',type)
-#        print('new_i',new_i)
-#        print('indexl', i)
 
         return layer, type, i
 
