@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="231dd863-8fdb-4c84-9cf6-56fbca50fca0" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="231dd863-8fdb-4c84-9cf6-56fbca50fca0" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -126,7 +124,14 @@
       <option name="project" value="LOCAL" />
       <updated>1652946770922</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="LFP2 update">
+      <created>1652949349912</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1652949349912</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -149,10 +154,11 @@
       <screen x="0" y="23" width="1440" height="783" />
     </state>
     <state x="448" y="48" key="#GUI/0.23.1440.783@0.23.1440.783" timestamp="1652174189183" />
-    <state x="365" y="23" width="709" height="792" key="CommitChangelistDialog2" timestamp="1652946770567">
-      <screen x="0" y="23" width="1440" height="792" />
+    <state x="365" y="23" width="709" height="792" key="CommitChangelistDialog2" timestamp="1652949349519">
+      <screen x="0" y="23" width="1440" height="795" />
     </state>
     <state x="365" y="23" width="709" height="792" key="CommitChangelistDialog2/0.23.1440.792@0.23.1440.792" timestamp="1652946770567" />
+    <state x="365" y="23" key="CommitChangelistDialog2/0.23.1440.795@0.23.1440.795" timestamp="1652949349519" />
     <state width="1419" height="247" key="GridCell.Tab.0.bottom" timestamp="1652946680641">
       <screen x="0" y="23" width="1440" height="792" />
     </state>
@@ -229,10 +235,11 @@
     <state width="1419" height="247" key="GridCell.Tab.1.right/0.23.1440.795@0.23.1440.795" timestamp="1652946292343" />
     <state width="1419" height="247" key="GridCell.Tab.1.right/0.23.1440.798@0.23.1440.798" timestamp="1652881078890" />
     <state width="1419" height="247" key="GridCell.Tab.1.right/0.23.1440.801@0.23.1440.801" timestamp="1652715135091" />
-    <state x="320" y="144" key="Vcs.Push.Dialog.v2" timestamp="1652946775398">
-      <screen x="0" y="23" width="1440" height="792" />
+    <state x="320" y="144" key="Vcs.Push.Dialog.v2" timestamp="1652949351877">
+      <screen x="0" y="23" width="1440" height="795" />
     </state>
     <state x="320" y="144" key="Vcs.Push.Dialog.v2/0.23.1440.792@0.23.1440.792" timestamp="1652946775398" />
+    <state x="320" y="144" key="Vcs.Push.Dialog.v2/0.23.1440.795@0.23.1440.795" timestamp="1652949351877" />
     <state x="413" y="248" key="com.intellij.ide.util.TipDialog" timestamp="1652174168044">
       <screen x="0" y="23" width="1440" height="783" />
     </state>
