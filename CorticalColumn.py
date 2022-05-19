@@ -1,3 +1,5 @@
+__author__ = 'Mariam, Maxime'
+
 import cProfile
 import pstats
 import os
@@ -77,7 +79,19 @@ spec1 = [
     ('ExternalPreSynaptic_Cell_AMPA_DPYR'   , types.List(typeof(np.array([], dtype=np.int32)))),
     ('ExternalPreSynaptic_Cell_AMPA_Th'     , types.List(typeof(np.array([], dtype=np.int32)))),
     ('PreSynapticWeight_AMPA'               , types.List(typeof(np.array([], dtype=np.int32)))),
-    ('PreSynapticWeight_GABA'               , types.List(typeof(np.array([], dtype=np.int32))))]
+    ('PreSynapticPos_AMPA1', types.List(typeof(np.array([], dtype=np.int32)))),
+    ('PreSynapticPos_AMPA2', types.List(typeof(np.array([], dtype=np.int32)))),
+    ('PreSynapticPos_AMPA3', types.List(typeof(np.array([], dtype=np.int32)))),
+    ('PreSynapticPos_AMPA4', types.List(typeof(np.array([], dtype=np.int32)))),
+    ('PreSynapticPos_AMPA5', types.List(typeof(np.array([], dtype=np.int32)))),
+    ('PreSynapticWeight_GABA'               , types.List(typeof(np.array([], dtype=np.int32)))),
+    ('PreSynapticPos_GABA1'               , types.List(typeof(np.array([], dtype=np.int32)))),
+    ('PreSynapticPos_GABA2', types.List(typeof(np.array([], dtype=np.int32)))),
+    ('PreSynapticPos_GABA3', types.List(typeof(np.array([], dtype=np.int32)))),
+    ('PreSynapticPos_GABA4', types.List(typeof(np.array([], dtype=np.int32)))),
+    ('PreSynapticPos_GABA5', types.List(typeof(np.array([], dtype=np.int32)))),
+
+]
 
 
 @jitclass(spec1)
@@ -91,7 +105,17 @@ class presynaptic_class():
                  ExternalPreSynaptic_Cell_AMPA_DPYR,
                  ExternalPreSynaptic_Cell_AMPA_Th,
                  PreSynapticWeight_AMPA,
-                 PreSynapticWeight_GABA):
+                 PreSynapticPos_AMPA1,
+                 PreSynapticPos_AMPA2,
+                 PreSynapticPos_AMPA3,
+                 PreSynapticPos_AMPA4,
+                 PreSynapticPos_AMPA5,
+                 PreSynapticWeight_GABA,
+                 PreSynapticPos_GABA1,
+                 PreSynapticPos_GABA2,
+                 PreSynapticPos_GABA3,
+                 PreSynapticPos_GABA4,
+                 PreSynapticPos_GABA5):
         self.PreSynaptic_Cell_AMPA = PreSynaptic_Cell_AMPA
         self.PreSynaptic_Cell_GABA = PreSynaptic_Cell_GABA
         self.PreSynaptic_Soma_AMPA = PreSynaptic_Soma_AMPA
@@ -101,7 +125,18 @@ class presynaptic_class():
         self.ExternalPreSynaptic_Cell_AMPA_DPYR =ExternalPreSynaptic_Cell_AMPA_DPYR
         self.ExternalPreSynaptic_Cell_AMPA_Th = ExternalPreSynaptic_Cell_AMPA_Th
         self.PreSynapticWeight_AMPA = PreSynapticWeight_AMPA
+        self.PreSynapticPos_AMPA1 = PreSynapticPos_AMPA1
+        self.PreSynapticPos_AMPA2 = PreSynapticPos_AMPA2
+        self.PreSynapticPos_AMPA3 = PreSynapticPos_AMPA3
+        self.PreSynapticPos_AMPA4 = PreSynapticPos_AMPA4
+        self.PreSynapticPos_AMPA5 = PreSynapticPos_AMPA5
         self.PreSynapticWeight_GABA = PreSynapticWeight_GABA
+        self.PreSynapticPos_GABA1 = PreSynapticPos_GABA1
+        self.PreSynapticPos_GABA2 = PreSynapticPos_GABA2
+        self.PreSynapticPos_GABA3 = PreSynapticPos_GABA3
+        self.PreSynapticPos_GABA4 = PreSynapticPos_GABA4
+        self.PreSynapticPos_GABA5 = PreSynapticPos_GABA5
+
 
 @njit
 def Model_compute(nbEch,
@@ -130,8 +165,16 @@ def Model_compute(nbEch,
                  pyrVs,
                  pyrVd,
                  pyrVa,
-                 pyrPPSE_d,
-                 pyrPPSI_d,
+                 pyrPPSE_d1,
+                 pyrPPSE_d23,
+                 pyrPPSE_d4,
+                 pyrPPSE_d5,
+                 pyrPPSE_d6,
+                 pyrPPSI_d1,
+                 pyrPPSI_d23,
+                 pyrPPSI_d4,
+                 pyrPPSI_d5,
+                 pyrPPSI_d6,
                  pyrPPSI_s,
                  pyrPPSI_a,
                  PV_Vs,
@@ -253,10 +296,38 @@ def Model_compute(nbEch,
                     I_AMPA = List_PYR[neurone].I_AMPA2(Vpre_AMPA)*W
                     I_NMDA = List_PYR[neurone].I_NMDA2(Vpre_AMPA, tps_start)*W
 
-                    List_PYR[neurone].add_I_synDend_Bis(I_AMPA)
                     List_PYR[neurone].add_I_synDend_Bis(I_NMDA)
 
-                    pyrPPSE_d[curr_pyr, tt] = (np.sum(I_AMPA) + np.sum(I_NMDA)) / List_PYR[neurone].Cm_d
+#                    pyrPPSE_d[curr_pyr, tt] = (np.sum(I_AMPA) + np.sum(I_NMDA)) / List_PYR[neurone].Cm_d
+                    x=I_AMPA + I_NMDA
+                    print(PS.PreSynapticPos_AMPA)
+                    #print(np.argwhere(PS.PreSynapticPos_AMPA == 5))
+
+                    if len(PS.PreSynapticPos_AMPA5)==0:
+                        pyrPPSE_d1[curr_pyr, tt] =0
+                    else:
+                        pyrPPSE_d1[curr_pyr, tt] = np.sum(x[PS.PreSynapticPos_AMPA5]) / List_PYR[neurone].Cm_d
+
+                    if len(PS.PreSynapticPos_AMPA4)==0:
+                        pyrPPSE_d23[curr_pyr, tt] =0
+                    else:
+                        pyrPPSE_d23[curr_pyr, tt] = np.sum(x[PS.PreSynapticPos_AMPA4]) / List_PYR[neurone].Cm_d
+
+                    if len(PS.PreSynapticPos_AMPA3)==0:
+                        pyrPPSE_d1[curr_pyr, tt] =0
+                    else:
+                        pyrPPSE_d1[curr_pyr, tt] = np.sum(x[PS.PreSynapticPos_AMPA3]) / List_PYR[neurone].Cm_d
+
+                    if len(PS.PreSynapticPos_AMPA2)==0:
+                        pyrPPSE_d1[curr_pyr, tt] =0
+                    else:
+                        pyrPPSE_d1[curr_pyr, tt] = np.sum(x[PS.PreSynapticPos_AMPA2]) / List_PYR[neurone].Cm_d
+
+                    if len(PS.PreSynapticPos_AMPA1)==0:
+                        pyrPPSE_d1[curr_pyr, tt] =0
+                    else:
+                        pyrPPSE_d1[curr_pyr, tt] = np.sum(x[PS.PreSynapticPos_AMPA1]) / List_PYR[neurone].Cm_d
+
 
                 elif typeS[i] == 1:  # PV
 
@@ -316,8 +387,18 @@ def Model_compute(nbEch,
                     List_PYR[neurone].add_I_synDend(I_GABA, PS.PreSynaptic_Soma_GABA_d[i])
                     List_PYR[neurone].add_I_synSoma(I_GABA, PS.PreSynaptic_Soma_GABA_s[i])
                     List_PYR[neurone].add_I_synAis(I_GABA, PS.PreSynaptic_Soma_GABA_a[i])
+###################################Add presynaptic currents per layer for dendrites#################
+                    x=I_GABA * PS.PreSynaptic_Soma_GABA_d[i]
 
-                    pyrPPSI_d[curr_pyr, tt] = np.sum(I_GABA*PS.PreSynaptic_Soma_GABA_d[i]) / List_PYR[neurone].Cm_d
+
+                    pyrPPSI_d1[curr_pyr, tt] = np.sum(x[np.argwhere(PS.PreSynapticPos_GABA==5)]) / List_PYR[neurone].Cm_d
+                    pyrPPSI_d23[curr_pyr, tt] = np.sum(x[np.argwhere(PS.PreSynapticPos_GABA==4)]) / List_PYR[neurone].Cm_d
+                    pyrPPSI_d4[curr_pyr, tt] = np.sum(x[np.argwhere(PS.PreSynapticPos_GABA==3)]) / List_PYR[neurone].Cm_d
+                    pyrPPSI_d5[curr_pyr, tt] = np.sum(x[np.argwhere(PS.PreSynapticPos_GABA==2)]) / List_PYR[neurone].Cm_d
+                    pyrPPSI_d6[curr_pyr, tt] = np.sum(x[np.argwhere(PS.PreSynapticPos_GABA==1)]) / List_PYR[neurone].Cm_d
+
+
+
                     pyrPPSI_s[curr_pyr, tt] = np.sum(I_GABA*PS.PreSynaptic_Soma_GABA_s[i]) / List_PYR[neurone].Cm
                     pyrPPSI_a[curr_pyr, tt] = np.sum(I_GABA*PS.PreSynaptic_Soma_GABA_a[i]) / List_PYR[neurone].Cm
 
@@ -388,7 +469,7 @@ def Model_compute(nbEch,
 
 
     tps_start += (t[-1] + dt)
-    return t,pyrVs, pyrVd, pyrVa,pyrPPSE_d,  pyrPPSI_d,  pyrPPSI_s,  pyrPPSI_a, PV_Vs, SST_Vs, VIP_Vs, RLN_Vs, DPYR_Vs, Th_Vs
+    return t,pyrVs, pyrVd, pyrVa,pyrPPSE_d1,pyrPPSE_d23,pyrPPSE_d4,pyrPPSE_d5,pyrPPSE_d6,  pyrPPSI_d1,  pyrPPSI_d23,  pyrPPSI_d4,  pyrPPSI_d5,  pyrPPSI_d6,  pyrPPSI_s,  pyrPPSI_a, PV_Vs, SST_Vs, VIP_Vs, RLN_Vs, DPYR_Vs, Th_Vs
 
 class CorticalColumn:
     updateTime = SenderObject()
@@ -1062,6 +1143,8 @@ class CorticalColumn:
         self.ExternalPreSynaptic_Cell_AMPA_Th= []
         self.PreSynapticWeight_AMPA=[]
         self.PreSynapticWeight_GABA=[]
+        self.PreSynapticPos_AMPA=[]
+        self.PreSynapticPos_GABA=[]
 
 
         target = Cell_morphology.Neuron(0,1,0)
@@ -1099,6 +1182,7 @@ class CorticalColumn:
                 AMPAcells = AMPAcells*0-1
                 AMPAcells_sparse = []
                 Weight_AMPA=[]
+                Pos_AMPA=[]
                 GABAcells=GABAcells*0-1#[]
                 GABAcells_sparse = []
                 GABASoma=np.zeros(nbcells,dtype=str)#[]
@@ -1106,6 +1190,8 @@ class CorticalColumn:
                 GABASoma_s_sparse=[]
                 GABASoma_a_sparse=[]
                 Weight_GABA = []
+                Pos_GABA=[]
+
                 subtype = []
 
                 #if Principal cell check subtypes
@@ -1263,7 +1349,7 @@ class CorticalColumn:
                             AMPAcells[pos]=-1
                             GABAcells[pos]=pos
                             GABASoma[pos]='s'
-                            Zpos[pos]= -10
+                            Zpos[pos]= 5 #from layer 1
 
 
                 for ll in range(1,5):
@@ -1305,7 +1391,7 @@ class CorticalColumn:
                                         if not pos == indexval:
                                             cm[pos] = 1
                                             Weight[pos]=weigthmini
-                                            Zpos[pos] =-10
+                                            Zpos[pos] =5-ll #add the layer of presynaptic cell
                                             if type == 0:
                                                 AMPAcells[pos] = pos
                                                 GABAcells[pos] = -1
@@ -1330,11 +1416,16 @@ class CorticalColumn:
                     if AMPAcells[i]!=-1:
                         AMPAcells_sparse.append(AMPAcells[i])
                         Weight_AMPA.append(Weight[i])
+                        Pos_AMPA.append(Zpos[i])
+
+
                         # AMPA_ProjVect.append(dist[i,:])
                 for i in range(len(GABAcells)):
                     if GABAcells[i]!=-1:
                         GABAcells_sparse.append(GABAcells[i])
                         Weight_GABA.append(Weight[i])
+                        Pos_GABA.append(Zpos[i])
+
                         # GABA_ProjVect.append(dist[i,:])
                         if GABASoma[i]=='d':
                             GABASoma_d_sparse.append(1) #1   for dent
@@ -1358,6 +1449,9 @@ class CorticalColumn:
                 self.PreSynaptic_Soma_GABA_a.append(np.asarray(GABASoma_a_sparse))
                 self.PreSynapticWeight_AMPA.append(np.asarray(Weight_AMPA))
                 self.PreSynapticWeight_GABA.append(np.asarray(Weight_GABA))
+                self.PreSynapticPos_AMPA.append(np.asarray(Pos_AMPA))
+                self.PreSynapticPos_GABA.append(np.asarray(Pos_GABA))
+
                 #connectivitymatrix.append(np.asarray(cm))
                 #connectivityweight.append(np.asarray(Weight))
 
@@ -2105,7 +2199,19 @@ class CorticalColumn:
             [np.array(l, dtype=np.int32) for l in self.ExternalPreSynaptic_Cell_AMPA_DPYR],
             [np.array(l, dtype=np.int32) for l in self.ExternalPreSynaptic_Cell_AMPA_Th],
             [np.array(l, dtype=np.int32) for l in self.PreSynapticWeight_AMPA],
-            [np.array(l, dtype=np.int32) for l in self.PreSynapticWeight_GABA])
+            [np.array(l, dtype=np.int32) for l in np.argwhere(self.PreSynapticPos_AMPA==1)],
+            [np.array(l, dtype=np.int32) for l in np.argwhere(self.PreSynapticPos_AMPA==2)],
+            [np.array(l, dtype=np.int32) for l in np.argwhere(self.PreSynapticPos_AMPA==3)],
+            [np.array(l, dtype=np.int32) for l in np.argwhere(self.PreSynapticPos_AMPA==4)],
+            [np.array(l, dtype=np.int32) for l in np.argwhere(self.PreSynapticPos_AMPA==5)],
+            [np.array(l, dtype=np.int32) for l in self.PreSynapticWeight_GABA],
+            [np.array(l, dtype=np.int32) for l in np.argwhere(self.PreSynapticPos_GABA==1)],
+            [np.array(l, dtype=np.int32) for l in np.argwhere(self.PreSynapticPos_GABA==2)],
+            [np.array(l, dtype=np.int32) for l in np.argwhere(self.PreSynapticPos_GABA==3)],
+            [np.array(l, dtype=np.int32) for l in np.argwhere(self.PreSynapticPos_GABA==4)],
+            [np.array(l, dtype=np.int32) for l in np.argwhere(self.PreSynapticPos_GABA==5)],
+
+        )
 
         self.List_DPYR = []
         self.List_Th = []
@@ -2432,8 +2538,16 @@ class CorticalColumn:
         self.pyrVd = np.zeros((np.sum(self.NB_PYR), len(t)))
         self.pyrVs = np.zeros((np.sum(self.NB_PYR), len(t)))
         self.pyrVa = np.zeros((np.sum(self.NB_PYR), len(t)))
-        self.pyrPPSE_d = np.zeros((np.sum(self.NB_PYR), len(t)))
-        self.pyrPPSI_d = np.zeros((np.sum(self.NB_PYR), len(t)))
+        self.pyrPPSE_d1 = np.zeros((np.sum(self.NB_PYR), len(t)))
+        self.pyrPPSE_d23 = np.zeros((np.sum(self.NB_PYR), len(t)))
+        self.pyrPPSE_d4 = np.zeros((np.sum(self.NB_PYR), len(t)))
+        self.pyrPPSE_d5 = np.zeros((np.sum(self.NB_PYR), len(t)))
+        self.pyrPPSE_d6 = np.zeros((np.sum(self.NB_PYR), len(t)))
+        self.pyrPPSI_d1 = np.zeros((np.sum(self.NB_PYR), len(t)))
+        self.pyrPPSI_d23 = np.zeros((np.sum(self.NB_PYR), len(t)))
+        self.pyrPPSI_d4 = np.zeros((np.sum(self.NB_PYR), len(t)))
+        self.pyrPPSI_d5 = np.zeros((np.sum(self.NB_PYR), len(t)))
+        self.pyrPPSI_d6 = np.zeros((np.sum(self.NB_PYR), len(t)))
         self.pyrPPSI_s = np.zeros((np.sum(self.NB_PYR), len(t)))
         self.pyrPPSI_a = np.zeros((np.sum(self.NB_PYR), len(t)))
         self.PV_Vs = np.zeros((np.sum(self.NB_PV), len(t)))
@@ -2452,7 +2566,7 @@ class CorticalColumn:
 
         if 1:
             t0 = time.time()
-            self.t, self.pyrVs, self.pyrVd, self.pyrVa, self.pyrPPSE_d, self.pyrPPSI_d, self.pyrPPSI_s, self.pyrPPSI_a, self.PV_Vs, self.SST_Vs, self.VIP_Vs, self.RLN_Vs, self.DPYR_Vs, self.Th_Vs = Model_compute(np.int(self.nbEch),
+            self.t, self.pyrVs, self.pyrVd, self.pyrVa, self.pyrPPSE_d1, self.pyrPPSE_d23, self.pyrPPSE_d4, self.pyrPPSE_d5, self.pyrPPSE_d6, self.pyrPPSI_d1, self.pyrPPSI_d23, self.pyrPPSI_d4, self.pyrPPSI_d5, self.pyrPPSI_d6, self.pyrPPSI_s, self.pyrPPSI_a, self.PV_Vs, self.SST_Vs, self.VIP_Vs, self.RLN_Vs, self.DPYR_Vs, self.Th_Vs = Model_compute(np.int(self.nbEch),
                                                                                              np.float(self.dt),
                                                                                              np.float(self.tps_start),
                                                                                              self.Layer_nbCells,
@@ -2478,8 +2592,16 @@ class CorticalColumn:
                                                                                              self.pyrVs,
                                                                                              self.pyrVd,
                                                                                              self.pyrVa,
-                                                                                             self.pyrPPSE_d,
-                                                                                             self.pyrPPSI_d,
+                                                                                             self.pyrPPSE_d1,
+                                                                                             self.pyrPPSE_d23,
+                                                                                             self.pyrPPSE_d4,
+                                                                                             self.pyrPPSE_d5,
+                                                                                             self.pyrPPSE_d6,
+                                                                                             self.pyrPPSI_d1,
+                                                                                             self.pyrPPSI_d23,
+                                                                                             self.pyrPPSI_d4,
+                                                                                             self.pyrPPSI_d5,
+                                                                                             self.pyrPPSI_d6,
                                                                                              self.pyrPPSI_s,
                                                                                              self.pyrPPSI_a,
                                                                                              self.PV_Vs,
@@ -2495,229 +2617,9 @@ class CorticalColumn:
                                                                                              np.int(self.seed))
             print(time.time() - t0)
             #run model
-        else:
-            for i in range(self.NB_DPYR):  # Distant Pyramidal cells
-                self.List_DPYR[i].dt = self.dt
-            for i in range(self.NB_Th):  # Thalamus
-                self.List_Th[i].dt = self.dt
-
-            # initialize PYR cells:
-            for i in range(np.sum(self.NB_PYR)):  # All PYR cells
-                self.List_PYR[i].dt = self.dt
-            for i in range(np.sum(self.NB_PV)):
-                self.List_PV[i].dt = self.dt
-            for i in range(np.sum(self.NB_SST)):
-                self.List_SST[i].dt = self.dt
-            for i in range(np.sum(self.NB_VIP)):
-                self.List_VIP[i].dt = self.dt
-            for i in range(np.sum(self.NB_RLN)):
-                self.List_RLN[i].dt = self.dt
-
-            for tt, tp in enumerate(t):
-                print(tp/t[-1])
-                self.tps_start += self.dt
-                for i in range(self.NB_DPYR):  ###distant cortex
-                    self.List_DPYR[i].init_I_syn()
-                    self.List_DPYR[i].updateParameters()
-                for i in range(self.NB_Th):  ###thalamus
-                    self.List_Th[i].init_I_syn()
-                    self.List_Th[i].updateParameters()
-
-                for i in range(np.sum(self.NB_PYR)):
-                    self.List_PYR[i].init_I_syn()
-                    self.List_PYR[i].updateParameters()
-                for i in range(np.sum(self.NB_PV)):
-                    self.List_PV[i].init_I_syn()
-                    self.List_PV[i].updateParameters()
-                for i in range(np.sum(self.NB_SST)):
-                    self.List_SST[i].init_I_syn()
-                    self.List_SST[i].updateParameters()
-                for i in range(np.sum(self.NB_VIP)):
-                    self.List_VIP[i].init_I_syn()
-                    self.List_VIP[i].updateParameters()
-                for i in range(np.sum(self.NB_RLN)):
-                    self.List_RLN[i].init_I_syn()
-                    self.List_RLN[i].updateParameters()
-
-                ####################### Add stim to external cells #######################
-                for i in range(self.NB_DPYR):
-                    self.List_DPYR[i].I_soma_stim = self.Stim_Signals[i, tt]
-                for i in range(self.NB_Th):
-                    self.List_Th[i].I_soma_stim = self.Stim_InputSignals[i, tt]
-
-                ########################################
-
-                for i in range(np.sum(self.Layer_nbCells)):
-                    nbstim = 0
-                    nbth = 0
-                    # print(i)
-                    #get cell type/layer/index per type
-                    layerS, typeS, indexS = self.All2layer(i, self.Layer_nbCells,self.NB_PYR, self.NB_PV, self.NB_SST, self.NB_VIP, self.NB_RLN, self.List_celltypes)
-                    neurone = indexS
-
-                    if (typeS == 0): #type ==> PC
-                        #Add external inputs respecting the connectivity table "afferences"
-                        if layerS == 1:  # add DPYR stim input
-                            nbstim = self.inputNB * 0.25  # from afferences table
-                            nbth = self.inputNB * 0.15
-
-                        if layerS == 2:  # add DPYR stim input
-                            nbstim = self.inputNB * 0.06  # from afferences table
-                            nbth = self.inputNB * 0.11
-
-                        if layerS == 3:  # add DPYR stim input
-                            nbstim = self.inputNB * 0.05  # from afferences table
-                            nbth = self.inputNB * 0.11
-
-                        if layerS == 4:  # add DPYR stim input
-                            nbstim = self.inputNB * 0.01  # from afferences table
-                            nbth = self.inputNB * 0.04
-                    else: #if interneurons no external input
-                        nbstim = 0
-                        nbth = 0
-
-                    ###Get  Cell's Synaptic input
-                    if len(self.PreSynaptic_Cell_AMPA[i]) > 0:
-                        Cell_AMPA = self.PreSynaptic_Cell_AMPA[i]
-                        Vpre_AMPA = np.zeros(len(Cell_AMPA) + int(nbth) + int(nbstim)) #nb of external +internal AMPA inputs
-                        for k, c in enumerate(Cell_AMPA):  # switch case afferences AMPA ---> PC
-                            #Get type/layer/ index per type of AMPA inputs == PCs
-                            layer, type, index = self.All2layer(c,  self.Layer_nbCells, self.NB_PYR, self.NB_PV, self.NB_SST, self.NB_VIP, self.NB_RLN, self.List_celltypes)
-                            Vpre_AMPA[k] = self.List_PYR[index].VsOutput()
-
-                            #switch cell's type to add AMPA input
-
-                            if typeS == 0:  # PC
-                                # add stim
-                                I_AMPA = self.List_PYR[neurone].I_AMPA2(Vpre_AMPA)
-                                I_NMDA = self.List_PYR[neurone].I_NMDA2(Vpre_AMPA, self.tps_start)
-                                # print(I_AMPA,I_NMDA)
-                                self.List_PYR[neurone].add_I_synDend_Bis(I_AMPA )
-                                self.List_PYR[neurone].add_I_synDend_Bis(I_NMDA )
-
-                            elif typeS == 1:  # PV
-                                I_AMPA = self.List_PV[neurone].I_AMPA2(Vpre_AMPA)
-                                #print(I_AMPA)
-                                I_NMDA = self.List_PV[neurone].I_NMDA2(Vpre_AMPA, self.tps_start)
-                                #print(I_NMDA)
-                                self.List_PV[neurone].add_I_synSoma(I_AMPA)
-                                self.List_PV[neurone].add_I_synSoma(I_NMDA)
-
-                            elif typeS == 2:  # SST
-                                I_AMPA = self.List_SST[neurone].I_AMPA2(Vpre_AMPA)
-                                I_NMDA = self.List_SST[neurone].I_NMDA2(Vpre_AMPA, self.tps_start)
-
-                                self.List_SST[neurone].add_I_synSoma(I_AMPA)
-                                self.List_SST[neurone].add_I_synSoma(I_NMDA)
-
-                            elif typeS == 3:  # VIP
-                                I_AMPA = self.List_VIP[neurone].I_AMPA2(Vpre_AMPA)
-                                I_NMDA = self.List_VIP[neurone].I_NMDA2(Vpre_AMPA, self.tps_start)
-                                self.List_VIP[neurone].add_I_synSoma(I_AMPA)
-                                self.List_VIP[neurone].add_I_synSoma(I_NMDA)
-
-                            elif typeS == 4:  # RLN
-                                I_AMPA = self.List_RLN[neurone].I_AMPA2(Vpre_AMPA)
-                                I_NMDA = self.List_RLN[neurone].I_NMDA2(Vpre_AMPA, self.tps_start)
-                                self.List_RLN[neurone].add_I_synSoma(I_AMPA)
-                                self.List_RLN[neurone].add_I_synSoma(I_NMDA)
-
-                        #add external input for PCs
-                        if (nbstim!=0)&(nbth!=0):
-                            x0 = np.random.randint(int(nbstim), size=int(nbstim))
-                            x1 = np.random.randint(int(nbth), size=int(nbth))
-                            for r in range(int(nbstim)):
-                                Vpre_AMPA[len(Cell_AMPA) + r] = self.List_DPYR[x0[r]].VsOutput()
-                            for r in range(int(nbth)):
-                                Vpre_AMPA[len(Cell_AMPA) + int(nbstim) + r] = self.List_Th[x1[r]].VsOutput()
-
-                    ########################################################################
-                    ##GABA
-                    if len(self.PreSynaptic_Cell_GABA[i]) > 0:
-                        Cell_GABA = self.PreSynaptic_Cell_GABA[i]
-                        Vpre_GABA = np.zeros(len(Cell_GABA))
-                        for k, c in enumerate(Cell_GABA):  # switch afferences
-                            layer, type, index = self.All2layer(c,  self.Layer_nbCells,self.NB_PYR, self.NB_PV, self.NB_SST, self.NB_VIP, self.NB_RLN, self.List_celltypes)
-
-                            if type == 1:  # PV
-                                Vpre_GABA[k] = self.List_PV[index].VsOutput()
-                            elif type == 2:  # SST
-                                Vpre_GABA[k] = self.List_SST[index].VsOutput()
-                            elif type == 3:  # VIP
-                                Vpre_GABA[k] = self.List_VIP[index].VsOutput()
-                            elif type == 4:  # RLN
-                                Vpre_GABA[k] = self.List_RLN[index].VsOutput()
-                            else:
-                                print('error')
-
-                        if typeS == 0:  # neurone is a PC
-                            I_GABA = self.List_PYR[neurone].I_GABA2(Vpre_GABA, self.PreSynaptic_Soma_GABA[i])
-                            self.List_PYR[neurone].add_I_synSoma(I_GABA, self.PreSynaptic_Soma_GABA[i])
-                            self.List_PYR[neurone].add_I_synDend(I_GABA,
-                                                                    np.ones([len(self.PreSynaptic_Soma_GABA[i])]) -
-                                                                    self.PreSynaptic_Soma_GABA[i])
-
-                        elif typeS == 1:  # interneuron PV
-                            I_GABA = self.List_PV[neurone].I_GABA2(Vpre_GABA)
-                            #print(neurone)
-                            #print(Vpre_GABA)
-                            #print(I_GABA)
-                            self.List_PV[neurone].add_I_synSoma(I_GABA)
-
-                        elif typeS == 2:  # interneuron SST
-                            I_GABA = self.List_SST[neurone].I_GABA2(Vpre_GABA)
-                            #print(I_GABA)
-
-                            self.List_SST[neurone].add_I_synSoma(I_GABA)
-
-                        elif typeS == 3:  # interneuron VIP
-                            I_GABA = self.List_VIP[neurone].I_GABA2(Vpre_GABA)
-                            self.List_VIP[neurone].add_I_synSoma(I_GABA)
-
-                        elif typeS == 4:  # RLN
-                            I_GABA = self.List_RLN[neurone].I_GABA2(Vpre_GABA)
-                            self.List_RLN[neurone].add_I_synSoma(I_GABA)
-
-                #############################################
-                ########Range Kutta#########################
-                for i in range(self.NB_DPYR):
-                    self.List_DPYR[i].rk4()
-
-                    print(self.List_DPYR[i].y[0])
-
-                for i in range(self.NB_Th):
-                    self.List_Th[i].rk4()
-                for i in range(np.sum(self.NB_PYR)):
-                    self.List_PYR[i].rk4()
-                for i in range(np.sum(self.NB_PV)):
-                    #print(self.List_PV[i].I_synSoma)
-                    self.List_PV[i].rk4()
-                for i in range(np.sum(self.NB_SST)):
-                    self.List_SST[i].rk4()
-                for i in range(np.sum(self.NB_VIP)):
-                    self.List_VIP[i].rk4()
-                for i in range(np.sum(self.NB_RLN)):
-                    self.List_RLN[i].rk4()
-
-                #######Get membrane potential variation#######
-
-                for i in range(np.sum(self.NB_PYR)):
-                    self.pyrVs[i, tt] = self.List_PYR[i].y[0]
-                    self.pyrVd[i, tt] = self.List_PYR[i].y[1]
-                for i in range(np.sum(self.NB_PV)):
-                    self.PV_Vs[i, tt] = self.List_PV[i].y[0]
-                for i in range(np.sum(self.NB_SST)):
-                    self.SST_Vs[i, tt] = self.List_SST[i].y[0]
-                for i in range(np.sum(self.NB_VIP)):
-                    self.VIP_Vs[i, tt] = self.List_VIP[i].y[0]
-                for i in range(np.sum(self.NB_RLN)):
-                    self.RLN_Vs[i, tt] = self.List_RLN[i].y[0]
 
 
-            self.tps_start += (t[-1] + self.dt)
-            self.t = t
-
-        return (self.t, self.pyrVs, self.pyrVd,self.pyrVa, self.pyrPPSE_d, self.pyrPPSI_d, self.pyrPPSI_s, self.pyrPPSI_a, self.PV_Vs, self.SST_Vs, self.VIP_Vs,self.RLN_Vs, self.DPYR_Vs, self.Th_Vs)
+        return (self.t, self.pyrVs, self.pyrVd,self.pyrVa, self.pyrPPSE_d1, self.pyrPPSE_d23, self.pyrPPSE_d4, self.pyrPPSE_d5, self.pyrPPSE_d6, self.pyrPPSI_d1, self.pyrPPSI_d23, self.pyrPPSI_d4, self.pyrPPSI_d5, self.pyrPPSI_d6, self.pyrPPSI_s, self.pyrPPSI_a, self.PV_Vs, self.SST_Vs, self.VIP_Vs,self.RLN_Vs, self.DPYR_Vs, self.Th_Vs)
 
     def Compute_LFP_fonc(self):
         electrode_pos = np.array([0, self.D/2+20, self.L/2])
