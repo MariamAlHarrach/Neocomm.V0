@@ -2843,7 +2843,7 @@ class ModelMicro_GUI(QMainWindow):
             self.CC.Generate_EField_Stim(self.EField_StimSig_CB.currentText(),A,F, stimOnOff,Start = Start, Length = Length)
 
             self.t0 = time.time()
-            self.t, self.pyrVs, self.pyrVd,self.pyrVa, self.pyrPPSE_d, self.pyrPPSI_d, self.pyrPPSI_s, self.pyrPPSI_a, self.PV_Vs, self.SST_Vs, self.VIP_Vs, self.RLN_Vs, self.DPYR_Vs, self.Th_Vs = self.CC.runSim()
+            self.t, self.pyrVs, self.pyrVd,self.pyrVa, self.pyrPPSE_d1, self.pyrPPSE_d23, self.pyrPPSE_d4, self.pyrPPSE_d5, self.pyrPPSE_d6, self.pyrPPSI_d1, self.pyrPPSI_d23, self.pyrPPSI_d4, self.pyrPPSI_d5, self.pyrPPSI_d6, self.pyrPPSI_s, self.pyrPPSI_a, self.PV_Vs, self.SST_Vs, self.VIP_Vs, self.RLN_Vs, self.DPYR_Vs, self.Th_Vs = self.CC.runSim()
 
             self.msg = msg_wait("Computation finished\nResults are currently displayed.\nPlease wait.")
 
