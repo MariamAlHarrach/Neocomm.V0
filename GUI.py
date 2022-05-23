@@ -3005,58 +3005,138 @@ class ModelMicro_GUI(QMainWindow):
             self.mascene_LFPViewer.update(shiftT=self.CC.tps_start - self.T)
         elif meth == 1:
             electrode_pos = np.array(self.electrode_pos)
-
-            # for i, ind in enumerate(self.CC.PreSynaptic_Cell_AMPA):
-            #     pos_neuron = self.CellPosition[self.flatindex[i][0]][self.flatindex[i][1]]
-            #     pos_pre = []
-            #     for k in ind:
-            #         pos_pre.append(self.CellPosition[self.flatindex[k][0]][self.flatindex[k][1]])
-
-            CellPosition_d = []
-            CellPosition_s = []
             CellPosition_a = []
+            CellPosition_d = []
+            CellPosition_d1 = []
+            CellPosition_d23 = []
+            CellPosition_d4 = []
+            CellPosition_d5 = []
+            CellPosition_d6 = []
+            updown=[]
+            CellPosition_s_up =[]
+            CellPosition_s_down = []
             target = Cell_morphology.Neuron(0, 1)
             for layer in range(len(self.CC.Cellpos)):
                 for n in range(self.CC.Cellpos[layer].shape[0]):
                     if self.CC.List_celltypes[layer][n] == 0:
-                        CellPosition_s.append(self.CC.Cellpos[layer][n])
+                        pos=self.CC.Cellpos[layer][n]
                         # subtype == 0  # TPC  subtype = 1  # UPC subtype = 2  # IPC subtype = 3  # BPC subtype = 4  # SSC
                         subtype = self.CC.List_cellsubtypes[layer][n]
                         target.update_type(0, layer=layer, subtype=subtype)
-                        diff_d = np.array([0., 0., target.mid_dend])
-                        diff_a = np.array([0., 0., -target.hsoma])
-                        if subtype in [0, 1, 2, 4]:
-                            CellPosition_d.append(self.CC.Cellpos[layer][n] + diff_d)
-                            CellPosition_a.append(self.CC.Cellpos[layer][n] - diff_a)
-                        else:
-                            CellPosition_d.append(self.CC.Cellpos[layer][n] - diff_d)
-                            CellPosition_a.append(self.CC.Cellpos[layer][n] + diff_a)
+                        d1 = np.array([pos[0],pos[1], self.CC.Layertop_pos[4]])
+                        d23 = np.array([pos[0], pos[1], self.CC.Layertop_pos[3]])
+                        d4 = np.array([pos[0], pos[1], self.CC.Layertop_pos[2]])
+                        d5 = np.array([pos[0], pos[1], self.CC.Layertop_pos[1]])
+                        d6 = np.array([pos[0], pos[1], self.CC.Layertop_pos[0]])
+                        s_down = np.array([pos[0], pos[1], pos[2]-target.hsoma/2])
+                        s_up = np.array([pos[0], pos[1], pos[2]+target.hsoma/2])
 
-            CellPosition_d = np.array(CellPosition_d)
-            CellPosition_s = np.array(CellPosition_s)
+                        CellPosition_d1.append(d1)
+                        CellPosition_d23.append(d23)
+                        CellPosition_d4.append(d4)
+                        CellPosition_d5.append(d5)
+                        CellPosition_d6.append(d6)
+
+
+                        if subtype in [0,1,3,4]:
+                            CellPosition_s_up.append(s_up)
+                            CellPosition_s_down.append(s_down)
+                            CellPosition_d.append(np.array([pos[0],pos[1], pos[2]+target.Adend_l]))
+                            CellPosition_a.append(np.array([pos[0], pos[1], pos[2] + target.axon_length]))
+
+
+
+                        else:
+                            CellPosition_s_up.append(s_down)
+                            CellPosition_s_down.append(s_up)
+                            CellPosition_d.append(np.array([pos[0],pos[1], pos[2]-target.Adend_l]))
+                            CellPosition_a.append(np.array([pos[0], pos[1], pos[2] -target.axon_length / 2]))
+
+
+
+
+
+
+
+
             CellPosition_a = np.array(CellPosition_a)
+            CellPosition_d = np.array(CellPosition_d)
+            CellPosition_d1 = np.array(CellPosition_d1)
+            CellPosition_d23 = np.array(CellPosition_d23)
+            CellPosition_d4 = np.array(CellPosition_d4)
+            CellPosition_d5 = np.array(CellPosition_d5)
+            CellPosition_d6 = np.array(CellPosition_d6)
+            CellPosition_s_up = np.array(CellPosition_s_up)
+            CellPosition_s_down = np.array(CellPosition_s_down)
+
 
             Distance_from_electrode_d = distance.cdist([electrode_pos, electrode_pos], CellPosition_d, 'euclidean')[0,
                                         :]
-            Distance_from_electrode_s = distance.cdist([electrode_pos, electrode_pos], CellPosition_s, 'euclidean')[0,
+
+            Distance_from_electrode_d1 = distance.cdist([electrode_pos, electrode_pos], CellPosition_d1, 'euclidean')[0,
                                         :]
+            Distance_from_electrode_d23 = distance.cdist([electrode_pos, electrode_pos], CellPosition_d23, 'euclidean')[0,
+                                        :]
+            Distance_from_electrode_d4 = distance.cdist([electrode_pos, electrode_pos], CellPosition_d4, 'euclidean')[0,
+                                        :]
+            Distance_from_electrode_d5 = distance.cdist([electrode_pos, electrode_pos], CellPosition_d5, 'euclidean')[0,
+                                        :]
+            Distance_from_electrode_d6 = distance.cdist([electrode_pos, electrode_pos], CellPosition_d6, 'euclidean')[0,
+                                        :]
+            Distance_from_electrode_s_up = distance.cdist([electrode_pos, electrode_pos], CellPosition_s_up, 'euclidean')[0,
+                                        :]
+            Distance_from_electrode_s_down = distance.cdist([electrode_pos, electrode_pos], CellPosition_s_down, 'euclidean')[0,
+                                        :]
+
             Distance_from_electrode_a = distance.cdist([electrode_pos, electrode_pos], CellPosition_a, 'euclidean')[0,
                                         :]
 
             Res = np.zeros(self.pyrPPSE_d.shape[1])
             sigma = 33e-5
-            for k in range(CellPosition_a.shape[0]):
-                Res = Res + ((self.pyrPPSE_d[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d[k]))
-                Res = Res - ((self.pyrPPSE_d[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s[k]))
+            for k in range(CellPosition_s_up.shape[0]):
 
-                Res = Res - ((self.pyrPPSI_d[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d[k]))
-                Res = Res + ((self.pyrPPSI_d[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s[k]))
+                ### PPSE dendrite
+                Res = Res + ((self.pyrPPSE_d1[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d1[k]))
+                Res = Res - ((self.pyrPPSE_d1[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
 
-                Res = Res - ((self.pyrPPSI_s[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s[k]))
+                Res = Res + ((self.pyrPPSE_d23[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d23[k]))
+                Res = Res - ((self.pyrPPSE_d23[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+                Res = Res + ((self.pyrPPSE_d4[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d4[k]))
+                Res = Res - ((self.pyrPPSE_d4[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+                Res = Res + ((self.pyrPPSE_d5[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d5[k]))
+                Res = Res - ((self.pyrPPSE_d5[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+                Res = Res + ((self.pyrPPSE_d6[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d6[k]))
+                Res = Res - ((self.pyrPPSE_d6[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+                ### PPSI dendrite
+
+                Res = Res - ((self.pyrPPSI_d1_d1[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d1[k]))
+                Res = Res + ((self.pyrPPSI_d1[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+                Res = Res - ((self.pyrPPSI_d23[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d23[k]))
+                Res = Res + ((self.pyrPPSI_d23[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+                Res = Res - ((self.pyrPPSI_d4[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d4[k]))
+                Res = Res + ((self.pyrPPSI_d4[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+                Res = Res - ((self.pyrPPSI_d5[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d5[k]))
+                Res = Res + ((self.pyrPPSI_d5[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+                Res = Res - ((self.pyrPPSI_d6[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d6[k]))
+                Res = Res + ((self.pyrPPSI_d6[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+                ### PPSI soma
+
+                Res = Res - ((self.pyrPPSI_s[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
                 Res = Res + ((self.pyrPPSI_s[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d[k]))
 
+                ### PPSE Axon
+
                 Res = Res - ((self.pyrPPSI_a[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_a[k]))
-                Res = Res + ((self.pyrPPSI_a[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s[k]))
+                Res = Res + ((self.pyrPPSI_a[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_down[k]))
 
             self.LFP = Res
             self.mascene_LFPViewer.update(shiftT=self.CC.tps_start - self.T)
