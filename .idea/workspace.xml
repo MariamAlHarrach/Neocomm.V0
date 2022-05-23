@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="231dd863-8fdb-4c84-9cf6-56fbca50fca0" name="Default Changelist" comment="LFP2 update" />
+    <list default="true" id="231dd863-8fdb-4c84-9cf6-56fbca50fca0" name="Default Changelist" comment="LFP2 update">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CorticalColumn.py" beforeDir="false" afterPath="$PROJECT_DIR$/CorticalColumn.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GUI.py" beforeDir="false" afterPath="$PROJECT_DIR$/GUI.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -195,12 +199,12 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/CorticalColumn.py</url>
-          <line>2534</line>
+          <line>2535</line>
           <option name="timeStamp" value="6" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/CorticalColumn.py</url>
-          <line>2191</line>
+          <line>2192</line>
           <option name="timeStamp" value="8" />
         </line-breakpoint>
       </breakpoints>

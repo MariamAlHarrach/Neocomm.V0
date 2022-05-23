@@ -677,13 +677,14 @@ class CorticalColumn:
              ], dtype=np.float)
 
     def update_inputNB(self):
-            self.inputNB = int(np.sum(self.Layer_nbCells) / 20)
+            self.inputNB = int(np.sum(self.Layer_nbCells) / 50)
     def update_connections(self,matrice, fixed = False):
         self.Afferences = matrice
         if fixed:
             self.inputpercent = matrice.astype(int)
         else:
-            self.inputpercent=(matrice*self.inputNB/100).astype(int)
+            self.inputpercent=np.ceil(matrice*self.inputNB/100)
+            self.inputpercent=self.inputpercent.astype(int)
         self.Allconnexions=[]
 
 

@@ -3036,13 +3036,12 @@ class ModelMicro_GUI(QMainWindow):
                         CellPosition_d4.append(d4)
                         CellPosition_d5.append(d5)
                         CellPosition_d6.append(d6)
-
+                        CellPosition_a.append(np.array([pos[0], pos[1], pos[2] + target.AX_up]))
 
                         if subtype in [0,1,3,4]:
                             CellPosition_s_up.append(s_up)
                             CellPosition_s_down.append(s_down)
                             CellPosition_d.append(np.array([pos[0],pos[1], pos[2]+target.Adend_l]))
-                            CellPosition_a.append(np.array([pos[0], pos[1], pos[2] + target.axon_length]))
 
 
 
@@ -3050,7 +3049,6 @@ class ModelMicro_GUI(QMainWindow):
                             CellPosition_s_up.append(s_down)
                             CellPosition_s_down.append(s_up)
                             CellPosition_d.append(np.array([pos[0],pos[1], pos[2]-target.Adend_l]))
-                            CellPosition_a.append(np.array([pos[0], pos[1], pos[2] -target.axon_length / 2]))
 
 
 
@@ -3091,7 +3089,7 @@ class ModelMicro_GUI(QMainWindow):
             Distance_from_electrode_a = distance.cdist([electrode_pos, electrode_pos], CellPosition_a, 'euclidean')[0,
                                         :]
 
-            Res = np.zeros(self.pyrPPSE_d.shape[1])
+            Res = np.zeros(self.pyrPPSE_d1.shape[1])
             sigma = 33e-5
             for k in range(CellPosition_s_up.shape[0]):
 
@@ -3113,7 +3111,7 @@ class ModelMicro_GUI(QMainWindow):
 
                 ### PPSI dendrite
 
-                Res = Res - ((self.pyrPPSI_d1_d1[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d1[k]))
+                Res = Res - ((self.pyrPPSI_d1[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d1[k]))
                 Res = Res + ((self.pyrPPSI_d1[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
 
                 Res = Res - ((self.pyrPPSI_d23[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d23[k]))
@@ -3193,9 +3191,9 @@ class ModelMicro_GUI(QMainWindow):
                 layers.append(l)
                 nb_pyr += 1
         cellspos = np.array(cellspos)
-        print(cellspos)
+        # print(cellspos)
 
-#        self.LFP = ComputeLFP.compute_dipoles(Vs_a, cellspos, Cellsubtypes,layers)
+        self.LFP = ComputeLFP.compute_dipoles(Vs_a, cellspos, Cellsubtypes,layers)
 #        self.LFP1 = ComputeLFP.compute_dipoles(Vs_d, cellspos, Cellsubtypes,layers)
 
 #        plt.plot(self.LFP)
