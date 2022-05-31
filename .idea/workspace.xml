@@ -2,9 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="231dd863-8fdb-4c84-9cf6-56fbca50fca0" name="Default Changelist" comment="LFP2 update">
+      <change afterPath="$PROJECT_DIR$/Column_morphology.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/PyrCellCA1.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase_[Default_Changelist]/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Default_Changelist_.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CorticalColumn.py" beforeDir="false" afterPath="$PROJECT_DIR$/CorticalColumn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GUI.py" beforeDir="false" afterPath="$PROJECT_DIR$/GUI.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -14,9 +17,20 @@
   <component name="FavoritesManager">
     <favorites_list name="NeoCom" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="Master" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-    <option name="UPDATE_TYPE" value="MERGE" />
   </component>
   <component name="IgnoredFileRootStore">
     <option name="generatedRoots">
@@ -38,6 +52,7 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Mariam\NeoCom" />
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
@@ -105,14 +120,37 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="cellmodel1" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\Mariam\AppData\Local\Programs\Python\Python37\python.exe" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/cellmodel1.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <list>
       <item itemvalue="Python.GUI" />
       <item itemvalue="Python.Model_Micro_GUI11_EField" />
       <item itemvalue="Python.CorticalColumn" />
+      <item itemvalue="Python.cellmodel1" />
     </list>
     <recent_temporary>
       <list>
         <item itemvalue="Python.GUI" />
+        <item itemvalue="Python.cellmodel1" />
         <item itemvalue="Python.CorticalColumn" />
         <item itemvalue="Python.Model_Micro_GUI11_EField" />
       </list>
@@ -163,7 +201,14 @@
       <option name="project" value="LOCAL" />
       <updated>1652949349912</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="LFP2 update">
+      <created>1653312473466</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1653312473466</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -177,7 +222,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/Dev" />
+                        <option value="origin/Master" />
                       </list>
                     </value>
                   </entry>
@@ -199,12 +244,12 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/CorticalColumn.py</url>
-          <line>2535</line>
+          <line>2534</line>
           <option name="timeStamp" value="6" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/CorticalColumn.py</url>
-          <line>2192</line>
+          <line>2191</line>
           <option name="timeStamp" value="8" />
         </line-breakpoint>
       </breakpoints>

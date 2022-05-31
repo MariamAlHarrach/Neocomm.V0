@@ -451,10 +451,9 @@ class CorticalColumn:
         self.D = 210 * 2  # neocortical column diameter in micrometers
         self.L = 2082  # neocortical column length in micrometers #Markram et al. 2015
         self.C = 2000
-        # self.d = 23  # minicolumn Diameter
         # Layer_d=np.array([165,353+149,190,525,700]) #layers' thicknesses (L1-L2/3-L4-L5-L6)
         self.Layer_d = np.array([165, 353 + 149, 190, 525, 700])  # layers' thicknesses (L1-L2/3-L4-L5-L6)
-        self.Layertop_pos=np.cumsum(np.array([700, 525 , 190, 353+149, 165]))
+        self.Layertop_pos=np.cumsum(self.Layer_d[::-1])
         # Layer_nbCells=np.array([338/3,7524/3,4656/3,6114/3,12651/3])  #total number of cells/neocortical column for each layer (L1-L2/3-L4-L5-L6)
         self.Layer_nbCells = np.array([322,7524, 4656, 6114,
                                   12651]) / d  # total number of cells/neocortical column for each layer (L1-L2/3-L4-L5-L6)
@@ -677,7 +676,7 @@ class CorticalColumn:
              ], dtype=np.float)
 
     def update_inputNB(self):
-            self.inputNB = int(np.sum(self.Layer_nbCells) / 50)
+            self.inputNB = int(np.sum(self.Layer_nbCells) / 20)
     def update_connections(self,matrice, fixed = False):
         self.Afferences = matrice
         if fixed:
