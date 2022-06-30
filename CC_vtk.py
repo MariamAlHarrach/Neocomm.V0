@@ -1,432 +1,241 @@
 __author__ = 'Mariam'
 
-from tkinter import Image
-from itertools import product
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 import numpy as np
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-import matplotlib
-from math import *  # importation du module
-# import tables
-import math
-from matplotlib.colors import BoundaryNorm
-# from pywt import wavedec
-# #import cv2 as cv
-# import cv2 as cv
-matplotlib.use('Qt5Agg')
-from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import axes3d, Axes3D
-from scipy import signal
-from scipy.fft import fftshift
+import vtk
 from scipy.io import loadmat
-import scipy.io
-import datetime
-import scipy.io as sio
-from matplotlib.ticker import MaxNLocator
-from Electrode import ElectrodeModel
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from PIL import Image
-# plt.rcParams.update({'font.size': 22})
-# import pywt
+#from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+from scipy.spatial import distance
+import CorticalColumn0
+import Column_morphology
+import CreateColumn
 
+class ElectrodeNN:
 
-class LFP:
-    def __init__(self, Fs=25000, re=10, tx=0, ty=0, pos=None):
-        # Electrode properties
-        #re: electrode radius
-        #tx:  tetax angle
-        #ty: teta y angle
-        if pos is None:
-            self.electrode_pos = [0e-3, 0e-3, 2050e-3]
-        else:
-            self.electrode_pos=pos
-        self.r_e = re * 1e-3
-        self.tx = tx
-        self.ty = ty
+    def __init__(self, Cellpos, NBPYRL,NB_PV,NB_SST, NB_VIP,NB_RLN,re=50,Electrodepos=[-150,150, 400]):
+        # self.PYRs = Pyrpos[0, :, :]
+        # self.PYRHs = Pyrposh[0, :, :]
+        # self.Bass = Bas[0, :, :]
+        # self.Biss = Bis[0, :, :]
+        # self.Som = SOM[0, :, :]
+        # self.cm=cm
+        self.cellpos = Cellpos
+        self.NBPYR =NBPYRL
+        self.PV=NB_PV
+        self.SST= NB_SST
+        self.VIP = NB_VIP
+        self.RLN=NB_RLN
+        self.r = re
+        self.Electrodepos=Electrodepos
+        self.List_of_lines = []
+        self.List_of_lines_mappers = []
+        self.List_of_lines_actors = []
 
-        V = []
-        f = []
-        #Geometrical characteristics of the Soma
-        dsoma = 1e-3*np.array([18, 11.77, 24.44,17.30])  # soma diameter for layers 2/3,4,5 and 6 resp in micrometres
-        hsoma = 1e-3*np.array([6.32, 7.57, 23.90,16.94])  # soma diameter for layers 2/3,4,5 and 6 resp in micrometres
-        dendritelength = 1e-3*np.array([275.8, 499, 792,593])# dendrite  for layers 2/3,4,5 and 6 resp in micrometres
+    def cylinder_object(self, Epos=None, my_color="slategray"):
+        if Epos is None:
+            Epos = self.Electrodepos
+        endPoint = np.add(Epos, np.array([0, 0, 400]))
+        colors = vtk.vtkNamedColors()
+        # Create a cylinder.
+        # Cylinder height vector is (0,1,0).
+        # Cylinder center is in the middle of the cylinder
+        cylinderSource = vtk.vtkCylinderSource()
+        cylinderSource.SetRadius(self.r)
+        cylinderSource.SetResolution(50)
 
-        # surface of soma
-        Ssoma = np.pi * (dsoma / 2) * ((dsoma / 2) + np.sqrt((dsoma / 2) ** 2 + hsoma ** 2))
+        # Generate a random start and end point
+        # startPoint = [0] * 3
+        # endPoint = [0] * 3
 
-        # proportion of soma
-        p = [0.09, 0.04, 0.042, 0.062] #0.15
+        rng = vtk.vtkMinimalStandardRandomSequence()
+        rng.SetSeed(8775070)  # For testing.8775070
 
-        #distance between sink and source
-        lss = dsoma / 2 + dendritelength / 2
-        Stotal = Ssoma / p
+        # Compute a basis
+        normalizedX = [0] * 3
+        normalizedY = [0] * 3
+        normalizedZ = [0] * 3
 
+        # The X axis is a vector from start to end
+        vtk.vtkMath.Subtract(endPoint, Epos, normalizedX)
+        length = vtk.vtkMath.Norm(normalizedX)
+        vtk.vtkMath.Normalize(normalizedX)
 
-        gc = 1e-5  # intercompartment conductance
-        fs = Fs  # Hz
+        # The Z axis is an arbitrary vector cross X
+        arbitrary = [0] * 3
+        for i in range(0, 3):
+            rng.Next()
+            arbitrary[i] = rng.GetRangeValue(-10, 10)
+        vtk.vtkMath.Cross(normalizedX, arbitrary, normalizedZ)
+        vtk.vtkMath.Normalize(normalizedZ)
 
-        # Electrolyte conductivity
-        sigma = 33 * 1e-5  # conductivity = 33.0 * 10e-5 ohm - 1.mm - 1
+        # The Y axis is Z cross X
+        vtk.vtkMath.Cross(normalizedZ, normalizedX, normalizedY)
+        matrix = vtk.vtkMatrix4x4()
+        # Create the direction cosine matrix
+        matrix.Identity()
+        for i in range(0, 3):
+            matrix.SetElement(i, 0, normalizedX[i])
+            matrix.SetElement(i, 1, normalizedY[i])
+            matrix.SetElement(i, 2, normalizedZ[i])
+        # Apply the transforms
+        transform = vtk.vtkTransform()
+        transform.Translate(Epos)  # translate to starting point
+        transform.Concatenate(matrix)  # apply direction cosines
+        transform.RotateWXYZ(90, 0, 0, 1)
+        transform.Scale(1.0, length, 1.0)  # scale along the height vector
+        transform.Translate(0, 0, 0)  # translate to start of cylinder
 
+        # Transform the polydata
+        transformPD = vtk.vtkTransformPolyDataFilter()
+        transformPD.SetTransform(transform)
+        transformPD.SetInputConnection(cylinderSource.GetOutputPort())
 
-        # electrode_pos = [150e-3, 150e-3, 100e-3]
-        self.K = gc * lss * Stotal / (4 * np.pi * sigma)
+        # Create a mapper and actor for the arrow
+        mapper = vtk.vtkPolyDataMapper()
+        actor = vtk.vtkActor()
+        mapper.SetInputConnection(cylinderSource.GetOutputPort())
+        actor.SetUserMatrix(transform.GetMatrix())
+        actor.SetMapper(mapper)
+        actor.GetProperty().SetColor(colors.GetColor3d(my_color))
+        return actor
 
-        self.nbptswiched = 1000
+    def PyrObject(self,pos,rp=7,hp=15, my_color="orchid_medium"):
+        colors = vtk.vtkNamedColors()
+        transform = vtk.vtkTransform()
+        transform.RotateY(270)
+        cone = vtk.vtkConeSource()
+        cone.SetHeight(hp)
+        cone.SetRadius(rp)
+        cone.SetResolution(20)
+        # Transform the polydata
+        tf = vtk.vtkTransformPolyDataFilter()
+        tf.SetTransform(transform)
+        tf.SetInputConnection(cone.GetOutputPort())
+        # Create a mapper and actor
+        mapper = vtk.vtkPolyDataMapper()
+        actor = vtk.vtkActor()
+        actor.SetPosition([pos[2], pos[1], pos[0]])
+        mapper.SetInputConnection(cone.GetOutputPort())
+        actor.SetUserMatrix(transform.GetMatrix())
+        actor.SetMapper(mapper)
+        actor.GetProperty().SetColor(colors.GetColor3d(my_color))
+        return actor
 
-    def getDiscPts(self, rad, step=0.01):
-        # max_pts = int(2 * rad / step) ** 2
-        # a = np.zeros(shape=(3, max_pts))
-        # x = np.linspace(-rad, rad, int(2 * rad / step))
-        # i = 0
-        # for x_pt in x:
-        #     y = np.linspace(-sqrt(abs(x_pt ** 2 - rad ** 2)), sqrt(abs(x_pt ** 2 - rad ** 2)),
-        #                     int(2 * sqrt(abs(x_pt ** 2 - rad ** 2)) / step))
-        #     for y_pt in y:
-        #         a[:, i] = [x_pt, y_pt, 0]
-        #         i += 1
-        # D = a[:, 0:i]
-        # if i==0:
-        #     D=[0,0,0]
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111,projection='3d')
-        # plt.plot(D[0,:],D[1,:],D[2,:])
-        # plt.show()
+    def BasObject(self, pos, r=7, my_color="DarkGreen"):
+        colors = vtk.vtkNamedColors()
+        sphere = vtk.vtkSphereSource()
+        sphere.SetCenter(-pos[0], pos[1], pos[2])
+        sphere.SetRadius(r)
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputConnection(sphere.GetOutputPort())
+        actor = vtk.vtkActor()
+        actor.SetMapper(mapper)
+        actor.GetProperty().SetColor(colors.GetColor3d(my_color))
+        return actor
 
-        i_coords, j_coords = np.meshgrid(np.arange(-rad,rad,step), np.arange(-rad,rad,step), indexing='ij')
-        corrds = np.stack((i_coords.flatten(), j_coords.flatten(), 0*i_coords.flatten()) ).T
-        dist = np.linalg.norm(corrds-np.array([0,0,0]),axis=1)
-        D  = corrds[dist<=rad]
-        return D
+    def render_scene(self, my_actor_list):
+        renderer = vtk.vtkRenderer()
+        for arg in my_actor_list:
+            renderer.AddActor(arg)
+        namedColors = vtk.vtkNamedColors()
+        renderer.SetBackground(namedColors.GetColor3d("white"))
 
-    def getCylPts(self, rad, step=0.01,th=0.02):
-        max_pts = int(2 * rad / step) ** 3
-        a = np.zeros(shape=(3, max_pts))
-        x = np.linspace(-rad, rad, int(2 * rad / step))
-        i = 0
-        for x_pt in x:
-            y = np.linspace(-sqrt(abs(x_pt ** 2 - rad ** 2)), sqrt(abs(x_pt ** 2 - rad ** 2)),
-                            int(2 * sqrt(abs(x_pt ** 2 - rad ** 2)) / step))
-            for y_pt in y:
-                a[:, i] = [x_pt, y_pt, 0]
-                i += 1
-        for x_pt in x:
-            z = np.linspace(0, th, int(th / step))
-            for z_pt in z:
-                a[:, i] = [x_pt, -sqrt(abs(x_pt ** 2 - rad ** 2)), z_pt]
-                i += 1
-                a[:, i] = [x_pt, sqrt(abs(x_pt ** 2 - rad ** 2)), z_pt]
-                i += 1
-        D = a[:, 0:i]
-        if i==0:
-            D=[0,0,0]
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111,projection='3d')
-        # plt.plot(D[0,:],D[1,:],D[2,:])
-        # plt.show()
-        return D
+        window = vtk.vtkRenderWindow()
+        window.SetWindowName("Oriented Cylinder")
+        window.AddRenderer(renderer)
 
-    def get_electrode_coordinates(self):
-        A = np.pi * self.r_e * self.r_e
-        D = self.getDiscPts(self.r_e,step=1/((1000/(np.pi*self.r_e*self.r_e))**0.5))
-        i = len(np.transpose(D))
-        rx = np.array([[1, 0, 0], [0, cos(math.radians(self.tx)), - sin(math.radians(self.tx))],
-                       [0, sin(math.radians(self.tx)), cos(math.radians(self.tx))]])
-        ry = np.array([[cos(math.radians(self.ty)), 0, sin(math.radians(self.ty))],
-                       [0, 1, 0], [-sin(math.radians(self.ty)), 0, cos(math.radians(self.ty))]])
-        # Ds = np.add(np.matmul( D,np.matmul(rx, ry)), np.array(
-        #     [np.ones(i) * self.electrode_pos[0], np.ones(i) * self.electrode_pos[1],
-        #      np.ones(i) * self.electrode_pos[2]]))
-        # C(i)=[Cr(1) + self.electrode_pos(1), Cr(2) + self.electrode_pos(2), Cr(3) + self.electrode_pos(3)];
-        Ds =  np.matmul(D, np.matmul(rx, ry)) + self.electrode_pos
-        return Ds
+        interactor = vtk.vtkRenderWindowInteractor()
+        interactor.SetRenderWindow(window)
 
-    def ApplyElectrodeTransform(self, D, center=None, tx=0, ty=0):
-        if center is None:
-            center = [0, 0, 0]
-        i = len(np.transpose(D))
-        rx = np.array([[1, 0, 0], [0, cos(math.radians(tx)), - sin(math.radians(tx))],
-                       [0, sin(math.radians(tx)), cos(math.radians(tx))]])
-        ry = np.array([[cos(math.radians(ty)), 0, sin(math.radians(ty))],
-                       [0, 1, 0], [-sin(math.radians(ty)), 0, cos(math.radians(ty))]])
-        Ds = np.add(np.matmul(np.matmul(rx, ry), D), np.array(
-            [np.ones(i) * center[0], np.ones(i) * center[1],
-             np.ones(i) * center[2]]))
-        # C(i)=[Cr(1) + self.electrode_pos(1), Cr(2) + self.electrode_pos(2), Cr(3) + self.electrode_pos(3)];
-        return Ds
+        # Visualize
+        window.Render()
+        interactor.Start()
 
-    def addnoise(self, lfp, SNR=35):
-        Plfp = np.mean(lfp ** 2)
-        Pnoise = Plfp / 10 ** (SNR / 10)
-        noise = np.random.normal(0, np.sqrt(Pnoise), len(lfp))
-        lfpn = lfp + noise
-        return lfpn
+    # Create the first line (between Origin and P0)
+    def addconnections(self,x1,x2):
+        colors = vtk.vtkNamedColors()
+        my_color="white"
+        points = vtk.vtkPoints()
+        points.SetNumberOfPoints(2)
+        points.SetPoint(0, x1[0], x1[1], x1[2])
+        points.SetPoint(1, x2[0], x2[1], x2[2])
 
-    def compute_dipoles(self, Vsd, cellspos, Cellsubtypes,layers):#VSD of pyr cells #Cellpos of pyrcells
+        line0 = vtk.vtkLine()
+        line0.GetPointIds().SetId(0, 0)  # the second 0 is the index of the Origin in the vtkPoints
+        line0.GetPointIds().SetId(1, 1)  # the second 1 is the index of P0 in the vtkPoints
 
-        cellspos = cellspos
-        disc = self.get_electrode_coordinates()
-        Vdip = np.array([0, 0, 1])
-        w_int = np.zeros( Vsd.shape[0])
-        v = np.zeros( Vsd.shape[1] )
-        i = 0
-        Cellsubtypes = np.array(Cellsubtypes)
-        VdipTm = np.transpose(-Vdip)
-        VdipT = np.transpose(Vdip)
-        K = np.array([self.K[ind - 1] for ind in layers  ])
+        lines = vtk.vtkCellArray()
+        lines.InsertNextCell(line0)
 
+        linesPolyData = vtk.vtkPolyData()
+        linesPolyData.SetLines(lines)
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputData(linesPolyData)
+        actor = vtk.vtkActor()
+        actor.SetMapper(mapper)
+        actor.GetProperty().SetColor(colors.GetColor3d(my_color))
+        return actor
+    def addaxes(self):
+        transform = vtk.vtkTransform()
+        transform.Translate(-400, 0, 300)
+        transform.Scale([100, 100, 100])
+        axes = vtk.vtkAxesActor()
+        axes.SetUserTransform(transform)
+        axes.GetXAxisCaptionActor2D().GetTextActor().SetTextScaleMode(vtk.vtkTextActor.TEXT_SCALE_MODE_NONE)
+        axes.GetXAxisCaptionActor2D().GetTextActor().GetTextProperty().SetFontSize(25)
+        axes.GetXAxisCaptionActor2D().GetTextActor().GetTextProperty().SetColor(0, 0, 0)
+        axes.GetYAxisCaptionActor2D().GetTextActor().SetTextScaleMode(vtk.vtkTextActor.TEXT_SCALE_MODE_NONE)
+        axes.GetYAxisCaptionActor2D().GetTextActor().GetTextProperty().SetFontSize(25)
+        axes.GetYAxisCaptionActor2D().GetTextActor().GetTextProperty().SetColor(0, 0, 0)
+        axes.GetZAxisCaptionActor2D().GetTextActor().SetTextScaleMode(vtk.vtkTextActor.TEXT_SCALE_MODE_NONE)
+        axes.GetZAxisCaptionActor2D().GetTextActor().GetTextProperty().SetFontSize(25)
+        axes.GetZAxisCaptionActor2D().GetTextActor().GetTextProperty().SetColor(0, 0, 0)
+        return axes
 
+    def plotCA1(self):
+        rp=np.array([0,9,4,12,9])
+        hp=np.array([0,6.32,7.57, 23.90,16.94])
+        colors_PYR=['','mediumpurple','darkviolet','darkmagenta','indigo']
+        my_list = []
+        my_list.append(self.addaxes())
+        # x = np.linspace(-150, 150, 4)
+        # y = np.linspace(-150, 150, 4)
+        # xx, yy = np.meshgrid(x, y)
+        # c = np.zeros(shape=(3, 16))
+        # c[0, :] = np.reshape(xx, (1, 16))
+        # c[1, :] = np.reshape(yy, (1, 16))
+        # c[2, :] = np.ones(shape=(1, 16))*150
+        # for cpos in np.transpose(c):
+        #     pos = cpos+np.array([-300,300,0])
+        #     my_list.append(self.cylinder_object(pos,my_color="gold"))
+        # my_list.append(self.cylinder_object())
 
-        A = (2*(1/((1000/(np.pi*self.r_e*self.r_e))**0.5) )**2) ** 0.5
+        for i in range(len(self.cellpos)):
+            layercell=self.cellpos[i]
+            for j in range(0, self.NBPYR[i]):
+                my_list.append(self.PyrObject(layercell[j], rp=rp[i],hp=hp[i],my_color=colors_PYR[i]))
+        # for i in range(0, len(self.PYRHs)):
+        #     my_list.append(self.PyrObject(self.PYRHs[i, :], my_color="Violet"))
+            for j in range(self.NBPYR[i], self.NBPYR[i]+self.PV[i]):
+                my_list.append(self.BasObject(layercell[j],my_color="ForestGreen"))
+            for j in range(self.NBPYR[i]+self.PV[i],self.NBPYR[i]+self.PV[i]+ self.SST[i]):
+                my_list.append(self.BasObject(layercell[j], r=6, my_color="Mediumblue"))
+            for j in range(self.NBPYR[i]+self.PV[i]+self.SST[i],self.NBPYR[i]+self.PV[i]+self.SST[i]+ self.VIP[i]):
+                my_list.append(self.BasObject(layercell[j], r=6, my_color="Indianred"))
+            for j in range(self.NBPYR[i] + self.PV[i] + self.SST[i]+ self.VIP[i],self.NBPYR[i] + self.PV[i] + self.SST[i] + self.VIP[i]+self.RLN[i]):
+                    my_list.append(self.BasObject(layercell[j], r=6, my_color="Orange"))
+        #for i in range(len(self.cm[0][0][0])):
+        sourcepos=self.cellpos[0][0]
+        targetpos=self.cellpos[0][2]
+ #       my_list.append(self.addconnections(sourcepos,targetpos))
 
-        Normals = np.array([0,0,1])
+        self.render_scene(my_list)
 
-        for di in  disc :
-            # j = 0
-            # for ind in range(cellspos.shape[0]):
-            #     dif = np.subtract(di, cellspos[ind])
-            #     dist = np.linalg.norm(di - cellspos,axis=1)** (3 / 2)
-            #     if (Cellsubtypes[ind] != 0) :
-            #         w_int[0, j] = np.matmul(dif, VdipTm) / dist
-            #     else:
-            #         w_int[0, j] = np.matmul(dif, VdipT) / dist
-            #     j += 1
-            #
-            #     v += (self.K[layers[ind]-1] * np.matmul(w_int, Vsd))[0,:]
-            #
-            # i += 1
-
-            # dif = np.subtract(di, cellspos)
-            # dist = np.linalg.norm(di - cellspos, axis=1) ** 3
-            # w_int = np.dot(dif,VdipT) / dist
-            # w_int[Cellsubtypes == 2] = np.dot(dif[Cellsubtypes == 2],VdipTm) / dist[Cellsubtypes == 2]
-            # v += np.matmul(K*w_int, Vsd) * A
-
-            # U = np.zeros(cellspos.shape[0])
-            # for k in range(cellspos.shape[0]):
-            #     vect_projectOnto = cellspos[k] - di
-            #     projection = (vect_projectOnto * np.dot(Normals, vect_projectOnto) / np.dot(vect_projectOnto, vect_projectOnto))
-            #     norm_vect_projectOnto = np.linalg.norm(vect_projectOnto)
-            #     norm_projection = np.linalg.norm(projection + vect_projectOnto)
-            #     U[k] = norm_vect_projectOnto - norm_projection
-            # U[U<0] = 0
-            # U[Cellsubtypes == 2] = -U[Cellsubtypes == 2]
-            # v += np.matmul(K*U/dist, Vsd) * A
-
-
-            dist = np.linalg.norm(di - cellspos, axis=1) ** 3
-            U = np.zeros(cellspos.shape[0])
-            vect_projectOnto = cellspos - di
-            projection = (vect_projectOnto * np.sum(Normals * vect_projectOnto, axis=1)[:, None])/   np.sum(vect_projectOnto * vect_projectOnto, axis=1)[:, None]
-            norm_vect_projectOnto = np.linalg.norm(vect_projectOnto,axis = 1)
-            norm_projection = np.linalg.norm(projection + vect_projectOnto,axis = 1)
-            U  = norm_vect_projectOnto - norm_projection
-
-            U[U<0] = 0
-            U[Cellsubtypes == 2] = -U[Cellsubtypes == 2]
-            v += np.matmul(K*U/dist, Vsd) * A
-
-
-        # V = v #/ (np.pi * self.r_e * self.r_e)
-
-        # plt.plot(V)
-        #b, a = signal.butter(2, 1024 / self.fs, 'low')
-        #V_lfp = signal.lfilter(b, a, V)
-        # plt.plot(V,'b',V_lfp,'r')
-        # plt.show()
-        return v * 1000
-
-    def computeMEAV(self, Vsd, cellsp, nbelectrodes=16): #for microelectrode array
-        V = []
-        x = np.linspace(-150e-3, 150e-3, 4)
-        y = np.linspace(-150e-3, 150e-3, 4)
-        xx, yy = np.meshgrid(x, y)
-
-        c = np.zeros(shape=(3, 16))
-        c[0, :] = np.reshape(xx, (1, 16))
-        c[1, :] = np.reshape(yy, (1, 16))
-        D = self.getDiscPts(20 * 1e-3, 0.01)
-        for cpos in np.transpose(c):
-            disc = self.ApplyElectrodeTransform(D, center=cpos + [300e-3, 300e-3, 100e-3])
-            Vdip = np.array([0, 0, 1])
-            w_int = np.zeros(shape=(1, len(cellsp)))
-            v = np.zeros(shape=(len(np.transpose(Vsd)), len(np.transpose(cellsp))))
-            i = 0
-            for di in np.transpose(disc):
-                j = 0
-                for dj in cellsp:
-                    w_int[0, j] = np.matmul(np.subtract(di, dj), np.transpose(Vdip)) / (
-                        np.sum(np.square(np.subtract(di, dj)))) ** (3 / 2)
-                    j += 1
-                v[:, i] = self.K * np.matmul(w_int, Vsd)
-                if i < len(np.transpose(cellsp)) - 1:
-                    i += 1
-
-            Vd = np.sum(v, axis=1) / i
-            #        V = self.addnoise(V)
-            # plt.plot(V)
-            b, a = signal.butter(2, 1024 / self.fs, 'low')
-            V_lfp = signal.lfilter(b, a, V)
-            # plt.plot(V,'b',V_lfp,'r')
-            # plt.show()
-            V.append(Vd * 1000)
-        return V
-
-
-#  compute HFO content
-# class FR_Lib:
-#     def computeFR_Energy(S,Ti,tinit=0,tend=0):
-#         formatted = (S * 255 / np.max(S)).astype('uint8')
-#         ret, thresh = cv.threshold(formatted, 0, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU)
-#         kernel = np.ones((3, 3), np.uint8)
-#         opening = cv.morphologyEx(thresh, cv.MORPH_OPEN, kernel, iterations=2)
-#         sure_bg = cv.dilate(opening, kernel, iterations=3)
-#         dist_transform = cv.distanceTransform(opening, cv.DIST_L2, 0)
-#         ret, sure_fg = cv.threshold(dist_transform, 0.1 * dist_transform.max(), 255, 0)
-#         sure_fg = np.uint8(sure_fg)
-#         unknown = cv.subtract(sure_bg, sure_fg)
-#         ret, markers = cv.connectedComponents(sure_fg)
-#         markers = markers + 1
-#         markers[unknown == 255] = 0
-#         # plt.pcolormesh(markers)
-#         # plt.show()
-#         i = np.where(markers == 1)
-#         T = i[1]
-#         if (tinit==0)&(tend==0):
-#             t0 = Ti[T.min()]
-#             te = Ti[T.max()]
-#         else:
-#             t0=tinit
-#             te=tend
-#         # print(t0)
-#         # print(te)
-#         FR = np.sum(S[200:600, T.min():T.max()])
-#         return FR,t0,te
 #
-#     def ComputeHFO(V,fs=25000,tinit=0,tend=0):
-#         if fs>2048:
-#             Vr = signal.resample(V, int(len(V) * 2048 / fs))
-#         else:
-#             Vr=V
-#         T=len(Vr)/2048
-#         coefs = wavedec(Vr, 'db4', level=3)
-#         cA3, cD3, cD2, cD1 = coefs
-#         fr = np.square(cD3)
-#         # plt.plot(fr)
-#         # plt.show()
-#         #   print(len(fr))
-#         w=30e-3*len(fr)/T
-#         ti=range(int(w/2),len(fr),int(w/2))
-#         # for s in range(len(ti)):
-#         #     window=fr[ti[s]-int(w/2):ti[s]+int(w/2)]
-#         #     if window.mean()>sqrt(fr.max()):
-#         #         tinit=ti[s]-int(w/2)
-#         #         break
-#         # for s in range(len(ti)):
-#         #     window=fr[ti[len(ti)-s-1]-int(w/2):ti[len(ti)-s-1]+int(w/2)]
-#         #     if window.mean()>sqrt(fr.max()):
-#         #         tend=ti[len(ti)-s-1]+int(w/2)
-#         #         break
+# CC=Column_morphology.Column(type=1)
+# Pos=CreateColumn.PlaceCell_func(CC.L,CC.L_th,CC.D,CC.Layer_nbCells)
 #
-#         t0 = int(tinit *len(fr))
-#         te = int(tend*len(fr))
-#         # print(t0)
-#         # print(te)
-#         delta = (tend - tinit) * 1000
-#         # print(delta)
-#         if 10 < delta < 70:
-#             HFO = np.sum(fr[t0:te])
-#             print(HFO)
-#         else:
-#             HFO = 0
-#         return HFO
-#
-#     def ComputeSBR(V,tinit,tend,fs=25000):
-#         # T=len(V)/fs
-#         t0 = int(tinit*fs)
-#         te = int(tend*fs)
-#         print(t0)
-#         print(te)
-#         delta = (tend-tinit) * 1000
-#         Ss=V[t0:te]
-#         Sb=np.concatenate([V[0:t0-1],V[te+1:len(V)-1]])
-#         if 10 < delta < 70:
-#             SBR=10*np.log10((len(Sb)*np.sum(np.square(Ss)))/((len(Ss)*np.sum(np.square(Sb)))))
-#         else:
-#             SBR = 0
-#         print(SBR)
-#         return SBR
-#
-#     def Get_FRSeg(S, tt, f):
-#         # trasform to gray level image mapp
-#         formatted = (S * 255 / np.max(S)).astype('uint8')
-#         # Get image type from array and save
-#         im = Image.fromarray(formatted)
-#         im.save('spectre.png')
-#         # Threshold the image
-#         ret, thresh = cv.threshold(formatted, 127, 255, cv.THRESH_BINARY_INV + cv.THRESH_OTSU)
-#         kernel = np.ones((3, 3), np.uint8)
-#         opening = cv.morphologyEx(thresh, cv.MORPH_OPEN, kernel, iterations=2)
-#         sure_bg = cv.dilate(opening, kernel, iterations=3)
-#         dist_transform = cv.distanceTransform(opening, cv.DIST_L2, 3)
-#         ret, sure_fg = cv.threshold(dist_transform, 0.01 * dist_transform.max(), 255, 0)
-#         sure_fg = np.uint8(sure_fg)
-#         unknown = cv.subtract(sure_bg, sure_fg)
-#         ret, markers = cv.connectedComponents(sure_fg, connectivity=8)
-#         markers = markers + 1
-#         markers[unknown == 255] = 0
-#         #######
-#         #######Plot Watershed
-#         # plt.subplot(131)
-#         # plt.pcolormesh(tt, f,S,cmap=cmap)
-#         # plt.subplot(132)
-#         # plt.pcolormesh(tt, f, markers,cmap=cmap)
-#         # plt.subplot(133)
-#         im = cv.imread('spectre.png')
-#         markers = cv.watershed(im, markers)
-#         w = np.where(markers == 1)
-#         T = w[1]
-#         T0 = tt[T.min()]
-#         T1 = tt[T.max()]
-#         if (T1 - T0) > 0.1:
-#             th = (T.max() - T.min()) / 2
-#             c = np.where(T > th)
-#             c = c[0]
-#             if len(c) > len(T) / 2:
-#                 Tn = T[np.where(T > th)]
-#             else:
-#                 Tn = T[np.where(T < th)]
-#             T0 = tt[Tn.min()]
-#             T1 = tt[Tn.max()]
-#         # plt.pcolormesh(tt,f,markers,cmap=cmap)
-#         # plt.show()
-#         print(T0)
-#         print(T1)
-#
-#         S[markers == -1] = S.max() * 2
-#         # plt.pcolormesh(tt, f, S,cmap=cmap)
-#         # plt.show()
-#         return T0, T1
-
-
-# file = loadmat('Test')  #file path
-# Vs = file['Vs']
-# Vd = file['Vd']
-# NBPYR=file['NBPYR']
-# Pos=file['PosCells']
-# Pos=Pos[0]
-# Pos=[np.array(Pos[i][0:NBPYR[0][i],:]) for i in [1,2,3,4]]
-# LayerNB=file['layer_NbCells']
-# PYRsubtypes=file['PYRSubtypes']
-#
-#
-# Vsd = np.subtract(Vs, Vd)
-# # for i in range(len(Vsd)):
-# #     plt.plot(Vsd[i,:])
-# #     plt.show()
-#
-# ComputeLFP=LFP()
-#
-# LFP=ComputeLFP.compute_dipoles(Vsd=Vsd,cellspos=Pos,Cellsubtypes=PYRsubtypes)
-# plt.plot(LFP)
-# plt.show()
+# drawNN = ElectrodeNN(Pos, CC.Layer_nbCells_pertype[0],  CC.Layer_nbCells_pertype[1], CC.Layer_nbCells_pertype[2],  CC.Layer_nbCells_pertype[3], CC.Layer_nbCells_pertype[4],Electrodepos=[-150,150,350])
+# drawNN.plotCA1()

@@ -1,33 +1,14 @@
 __author__ = 'Mariam'
 
-from tkinter import Image
-from itertools import product
+
 import numpy as np
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib
-from math import *  # importation du module
-# import tables
-import math
-from matplotlib.colors import BoundaryNorm
-# from pywt import wavedec
-# #import cv2 as cv
-# import cv2 as cv
-matplotlib.use('Qt5Agg')
+from math import *
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import axes3d, Axes3D
 from scipy import signal
-from scipy.fft import fftshift
-from scipy.io import loadmat
-import scipy.io
-import datetime
-import scipy.io as sio
-from matplotlib.ticker import MaxNLocator
-from Electrode import ElectrodeModel
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from PIL import Image
-# plt.rcParams.update({'font.size': 22})
-# import pywt
+import Cell_morphology
+from scipy.spatial import distance
 
 
 class LFP:
@@ -75,23 +56,6 @@ class LFP:
         self.nbptswiched = 1000
 
     def getDiscPts(self, rad, step=0.01):
-        # max_pts = int(2 * rad / step) ** 2
-        # a = np.zeros(shape=(3, max_pts))
-        # x = np.linspace(-rad, rad, int(2 * rad / step))
-        # i = 0
-        # for x_pt in x:
-        #     y = np.linspace(-sqrt(abs(x_pt ** 2 - rad ** 2)), sqrt(abs(x_pt ** 2 - rad ** 2)),
-        #                     int(2 * sqrt(abs(x_pt ** 2 - rad ** 2)) / step))
-        #     for y_pt in y:
-        #         a[:, i] = [x_pt, y_pt, 0]
-        #         i += 1
-        # D = a[:, 0:i]
-        # if i==0:
-        #     D=[0,0,0]
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111,projection='3d')
-        # plt.plot(D[0,:],D[1,:],D[2,:])
-        # plt.show()
 
         i_coords, j_coords = np.meshgrid(np.arange(-rad,rad,step), np.arange(-rad,rad,step), indexing='ij')
         corrds = np.stack((i_coords.flatten(), j_coords.flatten(), 0*i_coords.flatten()) ).T
@@ -130,10 +94,10 @@ class LFP:
         A = np.pi * self.r_e * self.r_e
         D = self.getDiscPts(self.r_e,step=1/((1000/(np.pi*self.r_e*self.r_e))**0.5))
         i = len(np.transpose(D))
-        rx = np.array([[1, 0, 0], [0, cos(math.radians(self.tx)), - sin(math.radians(self.tx))],
-                       [0, sin(math.radians(self.tx)), cos(math.radians(self.tx))]])
-        ry = np.array([[cos(math.radians(self.ty)), 0, sin(math.radians(self.ty))],
-                       [0, 1, 0], [-sin(math.radians(self.ty)), 0, cos(math.radians(self.ty))]])
+        rx = np.array([[1, 0, 0], [0, cos(radians(self.tx)), - sin(radians(self.tx))],
+                       [0, sin(radians(self.tx)), cos(radians(self.tx))]])
+        ry = np.array([[cos(radians(self.ty)), 0, sin(radians(self.ty))],
+                       [0, 1, 0], [-sin(radians(self.ty)), 0, cos(radians(self.ty))]])
         # Ds = np.add(np.matmul( D,np.matmul(rx, ry)), np.array(
         #     [np.ones(i) * self.electrode_pos[0], np.ones(i) * self.electrode_pos[1],
         #      np.ones(i) * self.electrode_pos[2]]))
@@ -145,10 +109,10 @@ class LFP:
         if center is None:
             center = [0, 0, 0]
         i = len(np.transpose(D))
-        rx = np.array([[1, 0, 0], [0, cos(math.radians(tx)), - sin(math.radians(tx))],
-                       [0, sin(math.radians(tx)), cos(math.radians(tx))]])
-        ry = np.array([[cos(math.radians(ty)), 0, sin(math.radians(ty))],
-                       [0, 1, 0], [-sin(math.radians(ty)), 0, cos(math.radians(ty))]])
+        rx = np.array([[1, 0, 0], [0, cos(radians(tx)), - sin(radians(tx))],
+                       [0, sin(radians(tx)), cos(radians(tx))]])
+        ry = np.array([[cos(radians(ty)), 0, sin(radians(ty))],
+                       [0, 1, 0], [-sin(radians(ty)), 0, cos(radians(ty))]])
         Ds = np.add(np.matmul(np.matmul(rx, ry), D), np.array(
             [np.ones(i) * center[0], np.ones(i) * center[1],
              np.ones(i) * center[2]]))
@@ -182,37 +146,6 @@ class LFP:
         Normals = np.array([0,0,1])
 
         for di in  disc :
-            # j = 0
-            # for ind in range(cellspos.shape[0]):
-            #     dif = np.subtract(di, cellspos[ind])
-            #     dist = np.linalg.norm(di - cellspos,axis=1)** (3 / 2)
-            #     if (Cellsubtypes[ind] != 0) :
-            #         w_int[0, j] = np.matmul(dif, VdipTm) / dist
-            #     else:
-            #         w_int[0, j] = np.matmul(dif, VdipT) / dist
-            #     j += 1
-            #
-            #     v += (self.K[layers[ind]-1] * np.matmul(w_int, Vsd))[0,:]
-            #
-            # i += 1
-
-            # dif = np.subtract(di, cellspos)
-            # dist = np.linalg.norm(di - cellspos, axis=1) ** 3
-            # w_int = np.dot(dif,VdipT) / dist
-            # w_int[Cellsubtypes == 2] = np.dot(dif[Cellsubtypes == 2],VdipTm) / dist[Cellsubtypes == 2]
-            # v += np.matmul(K*w_int, Vsd) * A
-
-            # U = np.zeros(cellspos.shape[0])
-            # for k in range(cellspos.shape[0]):
-            #     vect_projectOnto = cellspos[k] - di
-            #     projection = (vect_projectOnto * np.dot(Normals, vect_projectOnto) / np.dot(vect_projectOnto, vect_projectOnto))
-            #     norm_vect_projectOnto = np.linalg.norm(vect_projectOnto)
-            #     norm_projection = np.linalg.norm(projection + vect_projectOnto)
-            #     U[k] = norm_vect_projectOnto - norm_projection
-            # U[U<0] = 0
-            # U[Cellsubtypes == 2] = -U[Cellsubtypes == 2]
-            # v += np.matmul(K*U/dist, Vsd) * A
-
 
             dist = np.linalg.norm(di - cellspos, axis=1) ** 3
             U = np.zeros(cellspos.shape[0])
@@ -235,6 +168,147 @@ class LFP:
         # plt.plot(V,'b',V_lfp,'r')
         # plt.show()
         return v * 1000
+
+    def computeLFPmono(self,PPS,Epos,Cellpos,List_celltypes,List_cellsubtypes,Layertop_pos):
+        #electrode position
+        electrode_pos = Epos
+        #postsynapticpotentials
+        PPSE = PPS['PPSE']
+        PPSI = PPS['PPSI']
+        pyrPPSI_s = PPS['PPSI_s']
+        pyrPPSI_a = PPS['PPSI_a']
+
+        #positions
+        CellPosition_a = []
+        CellPosition_d = []
+        CellPosition_d1 = []
+        CellPosition_d23 = []
+        CellPosition_d4 = []
+        CellPosition_d5 = []
+        CellPosition_d6 = []
+        updown = []
+        CellPosition_s_up = []
+        CellPosition_s_down = []
+        target = Cell_morphology.Neuron(0, 1)
+        for layer in range(len(Cellpos)):
+            for n in range(Cellpos[layer].shape[0]):
+                if List_celltypes[layer][n] == 0:
+                    pos = Cellpos[layer][n]
+                    # subtype == 0  # TPC  subtype = 1  # UPC subtype = 2  # IPC subtype = 3  # BPC subtype = 4  # SSC
+                    subtype = List_cellsubtypes[layer][n]
+                    target.update_type(0, layer=layer, subtype=subtype)
+                    d1 = np.array([pos[0], pos[1], Layertop_pos[4]])
+                    d23 = np.array([pos[0], pos[1], Layertop_pos[3]])
+                    d4 = np.array([pos[0], pos[1], Layertop_pos[2]])
+                    d5 = np.array([pos[0], pos[1], Layertop_pos[1]])
+                    d6 = np.array([pos[0], pos[1], Layertop_pos[0]])
+                    s_down = np.array([pos[0], pos[1], pos[2] - target.hsoma / 2])
+                    s_up = np.array([pos[0], pos[1], pos[2] + target.hsoma / 2])
+
+                    CellPosition_d1.append(d1)
+                    CellPosition_d23.append(d23)
+                    CellPosition_d4.append(d4)
+                    CellPosition_d5.append(d5)
+                    CellPosition_d6.append(d6)
+                    CellPosition_a.append(np.array([pos[0], pos[1], pos[2] + target.AX_up]))
+
+                    if subtype in [0, 1, 3, 4]:
+                        CellPosition_s_up.append(s_up)
+                        CellPosition_s_down.append(s_down)
+                        CellPosition_d.append(np.array([pos[0], pos[1], pos[2] + target.Adend_l]))
+
+
+
+                    else:
+                        CellPosition_s_up.append(s_down)
+                        CellPosition_s_down.append(s_up)
+                        CellPosition_d.append(np.array([pos[0], pos[1], pos[2] - target.Adend_l]))
+
+        CellPosition_a = np.array(CellPosition_a)
+        CellPosition_d = np.array(CellPosition_d)
+        CellPosition_d1 = np.array(CellPosition_d1)
+        CellPosition_d23 = np.array(CellPosition_d23)
+        CellPosition_d4 = np.array(CellPosition_d4)
+        CellPosition_d5 = np.array(CellPosition_d5)
+        CellPosition_d6 = np.array(CellPosition_d6)
+
+
+        CellPosition_s_up = np.array(CellPosition_s_up)
+        CellPosition_s_down = np.array(CellPosition_s_down)
+
+        Distance_from_electrode_d = distance.cdist([electrode_pos, electrode_pos], CellPosition_d, 'euclidean')[0,
+                                    :]
+
+        Distance_from_electrode_d1 = distance.cdist([electrode_pos, electrode_pos], CellPosition_d1, 'euclidean')[0,
+                                     :]
+        Distance_from_electrode_d23 = distance.cdist([electrode_pos, electrode_pos], CellPosition_d23, 'euclidean')[0,
+                                      :]
+        Distance_from_electrode_d4 = distance.cdist([electrode_pos, electrode_pos], CellPosition_d4, 'euclidean')[0,
+                                     :]
+        Distance_from_electrode_d5 = distance.cdist([electrode_pos, electrode_pos], CellPosition_d5, 'euclidean')[0,
+                                     :]
+        Distance_from_electrode_d6 = distance.cdist([electrode_pos, electrode_pos], CellPosition_d6, 'euclidean')[0,
+                                     :]
+        Distance_from_electrode_s_up = distance.cdist([electrode_pos, electrode_pos], CellPosition_s_up, 'euclidean')[0,
+                                       :]
+        Distance_from_electrode_s_down = distance.cdist([electrode_pos, electrode_pos], CellPosition_s_down,
+                                                        'euclidean')[0,
+                                         :]
+
+        Distance_from_electrode_a = distance.cdist([electrode_pos, electrode_pos], CellPosition_a, 'euclidean')[0,
+                                    :]
+
+        Res = np.zeros(PPSE[0].shape[1])
+        sigma = 33e-5
+        for k in range(CellPosition_s_up.shape[0]):
+            ### PPSE dendrite
+            Res = Res + ((PPSE[0,k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d1[k]))
+            Res = Res - ((PPSE[0,k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+            Res = Res + ((PPSE[1,k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d23[k]))
+            Res = Res - ((PPSE[1,k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+            Res = Res + ((PPSE[2,k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d4[k]))
+            Res = Res - ((PPSE[2,k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+            Res = Res + ((PPSE[3,k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d5[k]))
+            Res = Res - ((PPSE[3,k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+            Res = Res + ((PPSE[4,k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d6[k]))
+            Res = Res - ((PPSE[4,k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+            ### PPSI dendrite
+
+            Res = Res - ((PPSI[0, k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d1[k]))
+            Res = Res + ((PPSI[0, k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+            Res = Res - ((PPSI[1, k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d23[k]))
+            Res = Res + ((PPSI[1, k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+            Res = Res - ((PPSI[2, k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d4[k]))
+            Res = Res + ((PPSI[2, k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+            Res = Res - ((PPSI[3, k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d5[k]))
+            Res = Res + ((PPSI[3, k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+            Res = Res - ((PPSI[4, k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d6[k]))
+            Res = Res + ((PPSI[4, k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+
+            ### PPSI soma
+
+            Res = Res - ((pyrPPSI_s[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_up[k]))
+            Res = Res + ((pyrPPSI_s[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_d[k]))
+
+            ### PPSE Axon
+
+            Res = Res - ((pyrPPSI_a[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_a[k]))
+            Res = Res + ((pyrPPSI_a[k, :]) / ((4 * np.pi * sigma) * Distance_from_electrode_s_down[k]))
+
+        LFP = Res
+
+        return LFP
+
+
 
     def computeMEAV(self, Vsd, cellsp, nbelectrodes=16): #for microelectrode array
         V = []

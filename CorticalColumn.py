@@ -332,6 +332,10 @@ def Model_compute(nbEch,
             if len(PS.PreSynaptic_Cell_GABA[i]) > 0:
                 Cell_GABA = PS.PreSynaptic_Cell_GABA[i]
                 Vpre_GABA = np.zeros(len(Cell_GABA))
+                # Weight= PS.PreSynapticWeight_GABA[i]
+                # if not len(Weight) == 0:
+                #     # nWeight = (Weight - np.min(Weight)) / (np.max(Weight) - np.min(Weight))
+                #     nWeight =  Weight / np.max(Weight)
                 for k, c in enumerate(Cell_GABA):  # switch afferences
                     # layer, type, index = All2layer(c,  Layer_nbCells,NB_PYR, NB_PV, NB_SST, NB_VIP, NB_RLN, List_celltypes)
 
@@ -351,7 +355,11 @@ def Model_compute(nbEch,
                     List_PYR[neurone].add_I_synDend(I_GABA, PS.PreSynaptic_Soma_GABA_d[i])
                     List_PYR[neurone].add_I_synSoma(I_GABA, PS.PreSynaptic_Soma_GABA_s[i])
                     List_PYR[neurone].add_I_synAis(I_GABA, PS.PreSynaptic_Soma_GABA_a[i])
+
+
+
 ###################################Add presynaptic currents per layer for dendrites#################
+
                     x=I_GABA * PS.PreSynaptic_Soma_GABA_d[i]
 
                     x = I_AMPA + I_NMDA

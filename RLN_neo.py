@@ -412,7 +412,7 @@ class RLNcell:
 
     # -------------Rate constant equations - --------
     def alpha_h_OLM(self, V_OLM):
-        return 0.07 * np.exp(-(V_OLM + 58.) / 20.)
+        return 0.04 * np.exp(-(V_OLM + 58.) / 20.)
 
 
     def beta_h_OLM(self, V_OLM):

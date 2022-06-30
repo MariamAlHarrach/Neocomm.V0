@@ -531,10 +531,10 @@ class Graph_viewer3D_VTK(QMainWindow):
         self.electrode_disk = self.parent.electrode_disk
 
         self.NBPYR = self.parent.CC.NB_PYR
-        self.PV = self.parent.CC.NB_PV
-        self.SST = self.parent.CC.NB_SST
-        self.VIP = self.parent.CC.NB_VIP
-        self.RLN = self.parent.CC.NB_RLN
+        self.PV = self.parent.CC.C.NB_PV
+        self.SST = self.parent.CC.C.NB_SST
+        self.VIP = self.parent.CC.C.NB_VIP
+        self.RLN = self.parent.CC.C.NB_RLN
 
         self.ren.RemoveAllViewProps()
 
