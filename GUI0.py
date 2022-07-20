@@ -456,6 +456,7 @@ class ModelMicro_GUI(QMainWindow):
         # scroll.setWidgetResizable(True)
         scroll.setFixedWidth(400 + 24)
         scroll.setAlignment(Qt.AlignTop)
+        scroll.setWidgetResizable(True)
         self.mainsplitter.addWidget(scroll)
 
         self.mainsplitter.addWidget(self.Vsplitter_middle)
@@ -520,7 +521,7 @@ class ModelMicro_GUI(QMainWindow):
 
     def set_Param_VBOX(self):
         #tissue size
-        self.tissue_size_GB = QGroupBox(r'tissue information')
+        self.tissue_size_GB = Spoiler(title=r'tissue information')
         labelD, D_e = Layout_grid_Label_Edit(label=['cylinder diameter / Square XY length / Rectangle X length (µm)'], edit=[str(self.CC.D)])
         labelL, L_e = Layout_grid_Label_Edit(label=['cylinder length / /Rectangle Y length (µm)'], edit=[str(self.CC.L)])
         labelCourbure, Courbure_e = Layout_grid_Label_Edit(label=['Distance for curvature'],
@@ -574,10 +575,11 @@ class ModelMicro_GUI(QMainWindow):
 
         self.Apply_tissue_PB.clicked.connect(self.set_tissue_func)
 
-        self.tissue_size_GB.setLayout(grid)
+        self.tissue_size_GB.setContentLayout(grid)
+        self.tissue_size_GB.toggleButton.click()
 
         # %tage
-        self.pourcentageCell_GB = QGroupBox(r'% de cell')
+        self.pourcentageCell_GB = Spoiler(title=r'% de cell')
         labelnb1 = QLabel('nb cells 1')
         labelnb23 = QLabel('nb cells 2/3')
         labelnb4 = QLabel('nb cells 4')
@@ -612,7 +614,6 @@ class ModelMicro_GUI(QMainWindow):
         grid.addWidget(self.nbcellsnb5, 1, 3)
         grid.addWidget(self.nbcellsnb6, 1, 4)
         grid.addWidget(self.nbcellsnbtotal, 1, 5)
-        self.pourcentageCell_GB.setLayout(grid)
 
         # nbconnexion
         label_source = QLabel('Layer')
@@ -626,6 +627,7 @@ class ModelMicro_GUI(QMainWindow):
         label_4 = QLabel('4')
         label_5 = QLabel('5')
         label_6 = QLabel('6')
+
         grid.addWidget(label_source, 4, 1, 1, 5, Qt.AlignHCenter)
         grid.addWidget(label_PYR, 6, 0)
         grid.addWidget(label_PV, 7, 0)
@@ -668,15 +670,18 @@ class ModelMicro_GUI(QMainWindow):
             self.List_RLNpercent.append(edit)
             grid.addWidget(edit, 10, l + 1)
 
+
         # Compute cell number
         self.Apply_percentage_PB = QPushButton('Apply Percentage')
         grid.addWidget(self.Apply_percentage_PB, 11, 1, 1, 3)
         self.Apply_percentage_PB.clicked.connect(self.update_cellNnumber)
 
+        self.pourcentageCell_GB.setContentLayout(grid)
+        self.pourcentageCell_GB.toggleButton.click()
+
         # Connection matrixcc
-        self.Afferences_GB = QGroupBox(r'afference matrix')
+        self.Afferences_GB = Spoiler(title=r'afference matrix')
         Afferences_GB_l = QVBoxLayout()
-        self.Afferences_GB.setLayout(Afferences_GB_l)
         self.Afferences_PB = QPushButton('Get Afference matrix')
         self.Afference_group = QButtonGroup(self)
         self.r0 = QRadioButton("Use percentage of the total number of cell")
@@ -695,9 +700,11 @@ class ModelMicro_GUI(QMainWindow):
         self.Connection_PB.clicked.connect(self.See_connections)
         self.r0.toggled.connect(self.update_connections_per_fixed)
         self.r1.toggled.connect(self.update_connections_per_fixed)
+        self.Afferences_GB.setContentLayout(Afferences_GB_l)
+        self.Afferences_GB.toggleButton.click()
 
         # cell placement
-        self.cell_placement_GB = QGroupBox(r"cell placement")
+        self.cell_placement_GB = Spoiler(title=r"cell placement")
         self.cell_placement_CB = QComboBox()
         list = ['Cylinder','Square', 'Rectange','Cylinder with curvature','Square with curvature', 'Rectange with curvature']
         self.cell_placement_CB.addItems(list)
@@ -715,11 +722,11 @@ class ModelMicro_GUI(QMainWindow):
         grid.addWidget(self.cell_placement_PB, 0, 1, 1, 2 )
         grid.addWidget(self.cell_connectivity_PB, 1, 1, 1, 2 )
         grid.addLayout(layoutseed, 1, 0, 1, 1)
-        self.cell_placement_GB.setLayout(grid)
+        self.cell_placement_GB.setContentLayout(grid)
         self.cell_placement_PB.clicked.connect(self.PlaceCell_func)
         self.cell_connectivity_PB.clicked.connect(self.connectivityCell_func)
 
-        self.EField_parameters_GB = QGroupBox(r"E-Field parameters")
+        self.EField_parameters_GB = Spoiler(title=r"E-Field parameters")
         self.EField_Conv_PB = QPushButton('Convert a txt E-Field')
         self.EField_file_PB = QPushButton('...')
         self.EField_file_TE = QLineEdit('')
@@ -804,7 +811,8 @@ class ModelMicro_GUI(QMainWindow):
         line += 1
         grid.addLayout(lay_stim, line, 0, 1, 4)
 
-        self.EField_parameters_GB.setLayout(grid)
+        self.EField_parameters_GB.setContentLayout(grid)
+        self.EField_parameters_GB.toggleButton.click()
 
         self.EField_Conv_PB.clicked.connect(self.EField_Conv_Fun)
         self.EField_file_PB.clicked.connect(self.get_Efield_path)
@@ -841,7 +849,7 @@ class ModelMicro_GUI(QMainWindow):
         self.Stimulation_parameters_GB.setLayout(grid)
 
         # InputTh param I_inj=25, tau=4, stimDur=3, nbstim=5, deltamin=14, delta=18)
-        self.InputTh_parameters_GB = QGroupBox(r"InputTh parameters")
+        self.InputTh_parameters_GB = Spoiler(title=r"InputTh parameters")
         label1 = QLabel('Stim duration (ms)')
         label2 = QLabel(r"Injected current density (µA/cm<sup>2</sup>)")
         label3 = QLabel("Time constant RC (ms)")
@@ -868,10 +876,10 @@ class ModelMicro_GUI(QMainWindow):
         grid.addWidget(self.TH_deltamin_e, 4, 1)
         grid.addWidget(label6, 5, 0)
         grid.addWidget(self.TH_delta_e, 5, 1)
-        self.InputTh_parameters_GB.setLayout(grid)
+        self.InputTh_parameters_GB.setContentLayout(grid)
 
         # Simulation parameters
-        self.Simulation_parameters_GB = QGroupBox(r"Simulation parameters")
+        self.Simulation_parameters_GB = Spoiler(title=r"Simulation parameters")
         label1 = QLabel('Simulation duration (ms)')
         label2 = QLabel(r"Sampling frequency (kHz)")
         self.SimDuration_e = LineEdit('100')
@@ -907,7 +915,7 @@ class ModelMicro_GUI(QMainWindow):
         grid.addWidget(self.StimStart_e, 2, 2)
         grid.addWidget(displaycurve_per_l, 4, 0)
         grid.addWidget(self.displaycurve_per_e, 4, 1)
-        self.Simulation_parameters_GB.setLayout(grid)
+        self.Simulation_parameters_GB.setContentLayout(grid)
         self.Run_PB.clicked.connect(self.simulate)
         self.UpdateModel_PB.clicked.connect(self.update_Model)
         self.ModifyModel_PB.clicked.connect(self.modify_Model)
@@ -919,7 +927,7 @@ class ModelMicro_GUI(QMainWindow):
         self.displayVTK_CB.setChecked(True)
 
         # electrode placement
-        self.electrode_placement_GB = QGroupBox(r"electrode position")
+        self.electrode_placement_GB = Spoiler(title=r"electrode position")
         label_x = QLabel('x y z')
         label_y = QLabel('y')
         label_z = QLabel('z')
@@ -966,7 +974,7 @@ class ModelMicro_GUI(QMainWindow):
         grid.addWidget(self.Compute_LFPDiskCoated_PB, 2, 4, 1, 2)
         grid.addWidget(self.Temporal_PSD_CB, 3, 4, 1, 2)
 
-        self.electrode_placement_GB.setLayout(grid)
+        self.electrode_placement_GB.setContentLayout(grid)
         [x.editingFinished.connect(self.electrode_placement_func) for x in [self.electrode_x_e, self.electrode_y_e, self.electrode_z_e]]
         [x.editingFinished.connect(self.electrode_placement_func) for x in [self.electrode_radius_e, self.electrode_angle1_e, self.electrode_angle2_e]]
         self.electrod_disk_CB.stateChanged.connect(self.electrode_placement_func)
@@ -983,7 +991,7 @@ class ModelMicro_GUI(QMainWindow):
         self.p = 0.15
 
         # synchro
-        self.synchro_GB = QGroupBox(r"synchronisation algorithm")
+        self.synchro_GB = Spoiler(title=r"synchronisation algorithm")
         self.synchro_l = QVBoxLayout()
         self.synchro_method_CB = QComboBox()
         list = ['Thresholding', 'AutoCorrelation', 'Nearest delay','ISI-distance','van Rossum distance','Victor Purpura distance' ]
@@ -994,7 +1002,8 @@ class ModelMicro_GUI(QMainWindow):
         self.synchro_l.addWidget(self.synchro_widget)
         self.update_synchro_method()
 
-        self.synchro_GB.setLayout(self.synchro_l)
+        self.synchro_GB.setContentLayout(self.synchro_l)
+        self.synchro_GB.toggleButton.click()
         self.synchro_method_CB.currentTextChanged.connect(self.update_synchro_method)
 
 
