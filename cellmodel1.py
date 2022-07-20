@@ -508,7 +508,7 @@ class Ui_Main(QMainWindow):
             self.Neurone.p = float(self.p_SD.text())
             self.Neurone.Cm = float(self.Cm_s.text())
             self.Neurone.g_c_SD = float(self.gc_SD.text())
-            self.Neurone.g_leak = float(self.A_g_Leak_s.text())
+            self.Neurone.g_leak = float(self.S_g_Leak_s.text())
 
 
 

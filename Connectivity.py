@@ -432,6 +432,8 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,*args):
                 subtype = []
 
                 # if Principal cell check subtypes
+                if cell ==273:
+                    aaaaa=1
                 if (C.List_celltypes[l][cell] == 0):  # getsubtype
                     if cell < PCsubtypes_Per[l][0]:
                         subtype = 0  # TPC
@@ -443,6 +445,9 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,*args):
                         subtype = 3  # BPC
                     elif (cell >= PCsubtypes_Per[l][3]) and (cell < PCsubtypes_Per[l][4]):
                         subtype = 4  # SSC
+
+                    print(l,cell,subtype,PCsubtypes_Per)
+                    print(List_cellsubtypes[l][cell])
                     List_cellsubtypes[l][cell] = subtype
 
                 # if PV check is chandeliers or Basket

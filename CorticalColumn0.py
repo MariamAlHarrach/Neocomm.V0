@@ -71,6 +71,7 @@ class CorticalColumn:
         #subtypes of PYR cells
         self.PCsubtypes_Per=self.C.PCsubtypes_Per #TPC,UPC,IPC,BPC,SSC
         self.List_celltypes = self.C.List_celltypes
+        self.List_cellsubtypes = self.C.List_cellsubtypes
         #####External afferences
         self.NB_DPYR=int(np.sum(self.NB_PYR)*0.07)
         self.NB_Th=int(np.sum(self.NB_PYR)*0.07)
@@ -282,24 +283,13 @@ class CorticalColumn:
         if np.sum(self.NB_PYR) == 0:
             self.List_PYR = [PC_neo3.pyrCellneo(1)]
         count = 0
-        PCsubtypes_Per = np.cumsum(self.PCsubtypes_Per,axis=1)
         for l in range(1, 5):
             for i in range(self.NB_PYR[l]):  # define PYR cells sublayer types
                 self.List_PYR.append(PC_neo3.pyrCellneo(l))
                 # Check subtypes and load lambda values
-                if i < PCsubtypes_Per[l][0]:
-                    subtype = 0  # TPC
-                elif (i >= PCsubtypes_Per[l][0]) and (i < PCsubtypes_Per[l][1]):
-                    subtype = 1  # UPC
-                elif (i >= PCsubtypes_Per[l][1]) and (i < PCsubtypes_Per[l][2]):
-                    subtype = 2  # IPC
-                elif (i >= PCsubtypes_Per[l][2]) and (i < PCsubtypes_Per[l][3]):
-                    subtype = 3  # BPC
-                elif (i >= PCsubtypes_Per[l][3]) and (i < PCsubtypes_Per[l][4]):
-                    subtype = 4  # SSC
-                self.List_PYR[count].Lambda_s[2] = self.List_Lambda_s[l-1][subtype]
-                self.List_PYR[count].Lambda_a[2] = self.List_Lambda_s[l-1][subtype]
-                self.List_PYR[count].Lambda_d[2] = self.List_Lambda_d[l-1][subtype]
+                self.List_PYR[count].Lambda_s[2] = self.List_Lambda_s[l-1][self.C.List_cellsubtypes[l][i]]
+                self.List_PYR[count].Lambda_a[2] = self.List_Lambda_s[l-1][self.C.List_cellsubtypes[l][i]]
+                self.List_PYR[count].Lambda_d[2] = self.List_Lambda_d[l-1][self.C.List_cellsubtypes[l][i]]
         ######PV
         if np.sum(self.C.NB_PV) == 0:
             self.List_PV = [PV_neo.PVcell()]

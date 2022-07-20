@@ -170,6 +170,8 @@ class LFP:
         return v * 1000
 
     def computeLFPmono(self,PPS,Epos,Cellpos,List_celltypes,List_cellsubtypes,Layertop_pos):
+
+
         #electrode position
         electrode_pos = Epos
         #postsynapticpotentials

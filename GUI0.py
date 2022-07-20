@@ -1701,6 +1701,7 @@ class ModelMicro_GUI(QMainWindow):
         print('placement')
         self.CC.updateCell.something_happened.connect(self.PlaceCell_msg)
         self.CellPosition = CreateColumn.PlaceCell_func(self.CC.L,self.CC.Layer_d,self.CC.D,self.CC.Layer_nbCells,placement,seed = seed)
+        self.CellPosition = np.array(self.CellPosition)
         print('Create_Connectivity_Matrices')
         t0 = time.time()
         self.CC.Conx = Connectivity.Create_Connectivity_Matrix(self.CC.C, self.CC.inputpercent, self.CC.NB_DPYR, self.CC.NB_Th,
@@ -1708,7 +1709,7 @@ class ModelMicro_GUI(QMainWindow):
         print(time.time() - t0)
         self.CC.updateCell.something_happened.disconnect(self.PlaceCell_msg)
 
-        self.CellPosition = np.array(self.CellPosition)
+
         self.createCells = True
 
         # # self.Create_Connectivity_Matrices()
@@ -2294,10 +2295,10 @@ class ModelMicro_GUI(QMainWindow):
             electrode_pos = np.array(self.electrode_pos)
 
             CellPosition = []
-            for layer in range(len(self.CC.Cellpos)):
-                for n in range(self.CC.Cellpos[layer].shape[0]):
+            for layer in range(len(self.CellPosition)):
+                for n in range(self.CellPosition[layer].shape[0]):
                     if self.CC.List_celltypes[layer][n] == 0:
-                        CellPosition.append(self.CC.Cellpos[layer][n])
+                        CellPosition.append(self.CellPosition[layer][n])
             CellPosition = np.array(CellPosition)
             #print(electrode_pos)
             Distance_from_electrode = distance.cdist([electrode_pos, electrode_pos], CellPosition, 'euclidean')[0, :]
@@ -2330,7 +2331,7 @@ class ModelMicro_GUI(QMainWindow):
             PPS['pyrPPSI_a']=self.pyrPPSI_a
 
             RP=RecordedPotential.LFP(self.Fs_e)
-            self.LFP=RP.computeLFPmono(PPS,electrode_pos,self.CC.Cellpos,self.CC.List_celltypes,self.CC.List_cellsubtypes)
+            self.LFP=RP.computeLFPmono(PPS,electrode_pos,self.CellPosition,self.CC.List_celltypes,self.CC.List_cellsubtypes)
 
             #
             # CellPosition_a = []

@@ -50,7 +50,7 @@ spec1 = [
 
 ]
 
-# @jitclass(spec1)
+@jitclass(spec1)
 class presynaptic_class():
     def __init__(self, PreSynaptic_Cell_AMPA,
                  PreSynaptic_Cell_GABA,
@@ -81,7 +81,7 @@ class presynaptic_class():
 
 
 
-# @njit
+@njit
 def Model_compute(nbEch,
                  dt,
                  tps_start,

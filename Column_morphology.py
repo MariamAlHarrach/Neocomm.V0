@@ -131,7 +131,7 @@ class Column:
         #cell number in each layer
         self.Layer_nbCells=self.Celldens* self.L_th*np.pi*self.R[Type]*self.R[Type]
         ##reduced numbers for simulation
-        self.Layer_nbCells=self.Layer_nbCells/30
+        self.Layer_nbCells=self.Layer_nbCells/10
         #from Markram et al. 2015 rat model
         self.PYRpercent = np.array([0, 0.7, 0.9, 0.8, 0.9])
         self.INpercent = 1 - self.PYRpercent
@@ -158,8 +158,14 @@ class Column:
              [-0.046, 0, 0.047,0.019, 0]  # layer VI-> TPC,UPC,IPC,BPC,SSC
              ], dtype=np.float)
 
-        self.PCsubtypes_Per=np.array([[0,0,0,0,0],[0.9*self.NB_PYR[1],0,0.1*self.NB_PYR[1],0,0],[0.5*self.NB_PYR[2],0.36*self.NB_PYR[2],0,0,0.14*self.NB_PYR[2]],[self.NB_PYR[3]*0.81,self.NB_PYR[3]*0.19,0,0,0],[self.NB_PYR[4]*0.39,self.NB_PYR[4]*0.17,self.NB_PYR[4]*0.20,self.NB_PYR[4]*0.24,0]]) #TPC,UPC,IPC,BPC,SSC
+        self.PCsubtypes_Per=np.array([[0,0,0,0,0],
+                                      [0.9*self.NB_PYR[1],0,0.1*self.NB_PYR[1],0,0],
+                                      [0.5*self.NB_PYR[2],0.36*self.NB_PYR[2],0,0,0.14*self.NB_PYR[2]],
+                                      [self.NB_PYR[3]*0.81,self.NB_PYR[3]*0.19,0,0,0],
+                                      [self.NB_PYR[4]*0.39,self.NB_PYR[4]*0.17,self.NB_PYR[4]*0.20,self.NB_PYR[4]*0.24,0]]) #TPC,UPC,IPC,BPC,SSC
         self.List_celltypes = np.array([np.array([0]*self.Layer_nbCells_pertype[0][l] + [1]*self.Layer_nbCells_pertype[1][l] + [2]*self.Layer_nbCells_pertype[2][l] + [3]*self.Layer_nbCells_pertype[3][l] + [4]*self.Layer_nbCells_pertype[4][l]).astype(int) for l in range(len(self.Layer_nbCells))])
+        self.GetCellsubtypes()
+
 
 
     def GetCelltypes(self):
@@ -182,6 +188,36 @@ class Column:
         self.Layer_nbCells_pertype=[self.NB_PYR,self.NB_PV,self.NB_SST,self.NB_VIP,self.NB_RLN]
 
 
+    def GetCellsubtypes(self):
+        self.List_cellsubtypes =copy.deepcopy(self.List_celltypes)
+        PCsubtypes_Per = np.cumsum(self.PCsubtypes_Per,axis=1)
+
+        for l in range(len(self.Layer_nbCells)):
+            for cell in range(int(self.Layer_nbCells[l])):
+
+                if (self.List_celltypes[l][cell] == 0):  # getsubtype of PC
+                    if cell < PCsubtypes_Per[l][0]:
+                        subtype = 0  # TPC
+                    elif (cell >= PCsubtypes_Per[l][0]) and (cell < PCsubtypes_Per[l][1]):
+                        subtype = 1  # UPC
+                    elif (cell >= PCsubtypes_Per[l][1]) and (cell < PCsubtypes_Per[l][2]):
+                        subtype = 2  # IPC
+                    elif (cell >= PCsubtypes_Per[l][2]) and (cell < PCsubtypes_Per[l][3]):
+                        subtype = 3  # BPC
+                    elif (cell >= PCsubtypes_Per[l][3]) and (cell < PCsubtypes_Per[l][4]):
+                        subtype = 4  # SSC
+
+                    self.List_cellsubtypes[l][cell] = subtype
+
+                #if PV check is chandeliers or Basket
+                elif (self.List_celltypes[l][cell] == 1):  # PV get subtype
+                    if (cell - self.NB_PYR[l]) < self.NB_PV_BC[l]:
+                        subtype = 0  # BC
+                    else:
+                        subtype = 1  # Chandelier
+                    self.List_cellsubtypes[l][cell] = subtype
+                else:
+                    self.List_cellsubtypes[l][cell] = -1
 
 if __name__ == '__main__':
     Column = Column(type=0)
