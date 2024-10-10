@@ -1,32 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="231dd863-8fdb-4c84-9cf6-56fbca50fca0" name="Default Changelist" comment="LFP2 update">
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase_[Default_Changelist]/shelved.patch" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Default_Changelist_.xml" beforeDir="false" />
+    <list default="true" id="231dd863-8fdb-4c84-9cf6-56fbca50fca0" name="Default Changelist" comment="essai commin tpush">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CC_vtk.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cell_morphology.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CorticalColumn.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/EEGViewer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Electrode.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/GUI.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Graph_EField_VTK.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Graph_viewer3D_VTK5.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LICENSE" beforeDir="false" afterPath="$PROJECT_DIR$/LICENSE" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Modify_Each_NMM_param.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Modify_X_NMM_VTK.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Modify_X_NMM_at_once.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/PC_neo3.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/PV_neo.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RLN_neo.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/RecordedPotential.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SST_neo.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/VIP_neo.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/afferences.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cellmodel1.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/logdata.log" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Tissue/CorticalColumn.py" beforeDir="false" afterPath="$PROJECT_DIR$/Tissue/CorticalColumn.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Tissue/PC_neo3.py" beforeDir="false" afterPath="$PROJECT_DIR$/Tissue/PC_neo3.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Tissue/PV_neo.py" beforeDir="false" afterPath="$PROJECT_DIR$/Tissue/PV_neo.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -208,7 +187,14 @@
       <option name="project" value="LOCAL" />
       <updated>1652949349912</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="essai commin tpush">
+      <created>1728566197997</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1728566197997</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -236,6 +222,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="LFP2 update" />
-    <option name="LAST_COMMIT_MESSAGE" value="LFP2 update" />
+    <MESSAGE value="essai commin tpush" />
+    <option name="LAST_COMMIT_MESSAGE" value="essai commin tpush" />
   </component>
 </project>

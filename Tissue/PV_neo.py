@@ -1,8 +1,6 @@
 import numpy as np
 from numba.experimental import jitclass
 from numba import boolean, int32, float64,uint8
-#import bigfloat
-#bigfloat.exp(5000,bigfloat.precision(100))
 
 def get_Variable_Names():
     return  ['g_leak','g_Na','g_K','g_KNa',
@@ -96,7 +94,7 @@ class PVcell:
     def __init__(self):
         self.Type = 2
         self.Layer = 1
-        # pot de repos
+
         self.E_leak = -65
         self.E_Na = 55
         self.E_K = -90
@@ -105,7 +103,7 @@ class PVcell:
         self.g_leak = 0.1
         self.g_K = 9
         self.g_Na = 35
-        self.g_KNa = 0#1.33
+        self.g_KNa = 0
 
         # synapses
         self.g_AMPA= 6
@@ -115,15 +113,14 @@ class PVcell:
         self.E_NMDA = 0.0
         self.E_GABA = -75
 
-        #Conductandes generales
         self.g_c = 0.1
         self.p = 0.05
         self.noise = 0.
 
-        #Courants imposés
+        #Stim Current
         self.I_soma_stim = 0.0
 
-        #parametres de membranes
+        #Membrane parameter
         self.Cm = 1
 
         self.PERCENT = 0.1
@@ -135,7 +132,7 @@ class PVcell:
         self.T = 273.16
         self.Q = self.F / (self.R * self.T)
         self.alpha_Na = 0.01
-        self.Rpump = 0.060  # * Publi: 0.018 * /
+        self.Rpump = 0.060
         self.Na_eq = 9.5
         self.A_s = 0.015
 
@@ -146,13 +143,6 @@ class PVcell:
         self.preThresh = 0.
         self.alpha = 0.072
         self.beta = 0.0066
-        # self.lastRelease = -1.e99
-        # self.Rinf = 0.
-        # self.Rtau = 0.
-        # self.Ra = 0.
-        # self.R0 = 0.
-        # self.R1 = 0.
-        # self.C = 0.
         self.mg = 1.
 
         #ODE vectors
@@ -162,13 +152,10 @@ class PVcell:
         self.NbODEs_s_GABA = 1
         self.init_vector()
 
-
         self.setParameters()
         self.updateParameters()
 
         self.fifteenpoxer3 = np.power(15.0, 3.)
-
-
 
     def init_vector(self):
         self.dydx = np.zeros(self.NbODEs, )
@@ -198,13 +185,6 @@ class PVcell:
         self.preThresh = 0.
         self.alpha = 0.072
         self.beta = 0.0066
-        # self.lastRelease = -1.e99
-        # self.Rinf = 0.
-        # self.Rtau = 0.
-        # self.Ra = 0.
-        # self.R0 = 0.
-        # self.R1 = 0.
-        # self.C = 0.
         self.lastRelease = -1.e99 * np.ones(self.NbODEs_s_AMPA, )
         self.Rinf = 0. * np.ones(self.NbODEs_s_AMPA, )
         self.Rtau = 0. * np.ones(self.NbODEs_s_AMPA, )
@@ -265,7 +245,6 @@ class PVcell:
     def dn_ib_dt(self, value):
         self.dydx[2] = value
 
-    # ajout IKNa
     @property
     def Na_intra_(self):
         return self.y[3]
@@ -283,37 +262,35 @@ class PVcell:
         self.dydx[3] = value
 
 
-    def setParameters(self):
-        #[self applyInterfaceParameters:self]
+    def setParameters(self): # parameter initialization
         self.y[0] = self.E_leak
         self.y[1] = self.alpha_h_ib(self.y[0]) / (self.alpha_h_ib(self.y[0]) + self.beta_h_ib(self.y[0]))
         self.y[2] = self.alpha_n_ib(self.y[0]) / (self.alpha_n_ib(self.y[0]) + self.beta_n_ib(self.y[0]))
         self.y[3] = 9.5
 
-    def bruitGaussien(self,s, m):
+    def bruitGaussien(self,s, m): #fix the noise
         return np.random.normal(m, s)
 
     def I_leak_ib(self,g_leak, PERCENT, V, E_leak):
         return self.bruitGaussien(PERCENT * g_leak, g_leak) * (V - E_leak)
 
     def updateParameters(self):
+        # update  equation for the current
         self.m_inf = self.m_inf_ib(self.y[0])
         self.alpha_h = self.alpha_h_ib(self.y[0])
         self.alpha_n = self.alpha_n_ib(self.y[0])
         self.beta_h = self.beta_h_ib(self.y[0])
         self.beta_n = self.beta_n_ib(self.y[0])
 
+        # compute the current
         self.I_Na = self.I_Na_ib(self.g_Na, self.m_inf, self.y[1], self.y[0], self.E_Na)
         self.I_K = self.I_K_ib(self.g_K, self.y[2], self.y[0], self.E_K)
         self.I_leak = self.I_leak_ib(self.g_leak, self.PERCENT, self.y[0], self.E_leak)
-        # ajoutIKNa
         self.I_KNa = self.I_KNa_ib(self.g_KNa, self.y[3], self.y[0], self.E_K)
 
-        # self.I_soma_stim = [self getI_soma_stim];
 
-
-    def rk4(self):
-        self.yt = self.y+0. #y origine at t
+    def rk4(self): #Runge Kutta 4 solver
+        self.yt = self.y+0. # old y at t
         self.dydx1=self.derivT()#K1
         self.y = self.yt + self.dydx1 * self.dt / 2
         self.dydx2=self.derivT()#K2
@@ -324,9 +301,7 @@ class PVcell:
         self.y =self.yt + self.dt/6. *(self.dydx1+2*self.dydx2+2*self.dydx3+self.dydx)#y at t+dt
 
     def derivT(self):
-
-        # avec IKNa
-        #print(self.I_synSoma)
+        # ODE equations
         self.dV_ib_dt = 1. / self.Cm * (-self.I_KNa - self.I_Na - self.I_K - self.I_leak + self.I_soma_stim - self.I_synSoma)
         Na_intra_power3 = self.Na_intra_ * self.Na_intra_ * self.Na_intra_
         Na_eq_power3 = self.Na_eq * self.Na_eq * self.Na_eq
@@ -363,10 +338,10 @@ class PVcell:
 
     # ---------------------------------------
     def F_fonc_ib(self, Vpre):
-        return 1. / (1. + np.exp(-(Vpre - 0.) / 2 ))#1. / (1. + np.exp(-(Vpre - teta_syn) / K))
+        return 1. / (1. + np.exp(-(Vpre - 0.) / 2 ))
 
     def T_fonc_ib(self, Vpre):
-        return 2.84 / (1 + np.exp(-(Vpre - 2.) / 5.))#Tmax / (1 + np.exp(-(Vpre - Vp) / Kp))
+        return 2.84 / (1 + np.exp(-(Vpre - 2.) / 5.))
 
     # --------------------  COURANT - ----------------------
     def I_Na_ib(self, g_Na_ib, m_inf_ib,  h_ib, V_ib, E_Na_ib):
@@ -374,12 +349,11 @@ class PVcell:
 
     def I_K_ib(self, g_K_ib, n_ib, V_ib, E_K_ib):
         return g_K_ib * n_ib * n_ib * n_ib * n_ib * (V_ib - E_K_ib)
-    # ajout IKNa
+
     def I_KNa_ib(self, g_KNa_ib, Na_intra, Vs, E_K):
         w = 0.37 / (1.0 + (38.7 / pow(Na_intra, 3.5)))
         return g_KNa_ib * w * (Vs - E_K)
 
-    # -----------------------------------------------------
     # -----------------------------------------------------
 
     def I_AMPA(self, Vd):
@@ -387,7 +361,6 @@ class PVcell:
 
     def I_AMPA2(self,Vpre):
         self.computeI_AMPA(Vpre)
-        #Vd = np.array([self.VSoma() for i in Vpre])
         return ((self.g_AMPA * 0.1) / 1.25) * self.s_AMPA * (self.VSoma() - self.E_AMPA)
 
     def I_GABA(self, Vd):
@@ -395,8 +368,6 @@ class PVcell:
 
     def I_GABA2(self,Vpre):
         self.computeI_GABA(Vpre)
-        #Vd = np.array([self.VSoma() for i in vect])
-        # Vd = np.array([self.VSoma() for i in Vpre])
         return ((self.g_GABA * 0.1) / 1.25) * self.s_GABA * (self.VSoma() - self.E_GABA)
 
     def I_NMDA2(self,Vpre,t):
@@ -406,49 +377,39 @@ class PVcell:
     def I_syn_ib(self, I_GABA_ib, I_AMPA_ib, I_NMDA_ib):
         return (I_GABA_ib + I_AMPA_ib + I_NMDA_ib)
 
-    # trasmission synaptique
+    #ODE for synaptic AMPA
     def computeI_AMPA(self, Vpre):
         self.T_fonc = 1.1 * self.T_fonc_ib(Vpre)
-        # rk4
-        self.s_AMPAo = self.s_AMPA + 0.  # y origine at t
+        self.s_AMPAo = self.s_AMPA + 0.
         self.ds_AMPA1 = self.derivs_AMPA_ib()
-        # K1
         self.s_AMPA = self.s_AMPAo + self.ds_AMPA1 * self.dt / 2
         self.ds_AMPA2 = self.derivs_AMPA_ib()
-        # K2
         self.s_AMPA = self.s_AMPAo + self.ds_AMPA2 * self.dt / 2
         self.ds_AMPA3 = self.derivs_AMPA_ib()
-        # K3
         self.s_AMPA = self.s_AMPAo + self.ds_AMPA3 * self.dt
-        # K4
         self.s_AMPA = self.s_AMPAo + self.dt / 6. * (self.ds_AMPA1 + 2 * self.ds_AMPA2 + 2 * self.ds_AMPA3 + self.derivs_AMPA_ib())
-        # y at t+dt
         return self.s_AMPA
 
     def derivs_AMPA_ib(self):
         return self.T_fonc * (1 - self.s_AMPA) - 0.19 * self.s_AMPA
 
+    # ODE for synaptic GABA
     def computeI_GABA(self, Vpre):
         self.F_fonc = 10. * self.F_fonc_ib(Vpre)
-        # rk4
-        self.s_GABAo = self.s_GABA + 0.  # y origine at t
+        self.s_GABAo = self.s_GABA + 0.
         self.ds_GABA1 = self.derivs_GABA_ib()
-        # K1
         self.s_GABA = self.s_GABAo + self.ds_GABA1 * self.dt / 2
         self.ds_GABA2 = self.derivs_GABA_ib()
-        # K2
         self.s_GABA = self.s_GABAo + self.ds_GABA2 * self.dt / 2
         self.ds_GABA3 = self.derivs_GABA_ib()
-        # K3
         self.s_GABA = self.s_GABAo + self.ds_GABA3 * self.dt
-        # K4
         self.s_GABA = self.s_GABAo + self.dt / 6. * (self.ds_GABA1 + 2 * self.ds_GABA2 + 2 * self.ds_GABA3 + self.derivs_GABA_ib())
-        # y at t+dt
         return self.s_GABA
 
     def derivs_GABA_ib(self):
         return self.F_fonc * (1. - self.s_GABA) - 0.07 * self.s_GABA
 
+    # equation for synaptic NMDA
     def computeI_NMDA(self, Vpre, t, Vs_d):
         for i in range(len(Vpre)):
             q = t - self.lastRelease[i] - self.Cdur
@@ -486,6 +447,5 @@ class PVcell:
         self.I_synSoma = 0.
 
     def add_I_synSoma(self, I):
-        # self.I_synSoma += np.sum(I * vect)
         for i in range(len(I)):
             self.I_synSoma += I[i]

@@ -115,7 +115,6 @@ class RLNcell:
     def __init__(self):
         self.Type = 5
         self.Layer = 1
-        # pot de repos
         self.E_leak = -60
         self.E_Na = 55
         self.E_K = -90
@@ -129,7 +128,6 @@ class RLNcell:
         self.g_Ca = 1
         self.g_h = 0.15
         self.g_KCa = 10
-        # self.g_KNa_OLM = 10
 
         # synapses
         self.g_AMPA= 6
@@ -139,15 +137,14 @@ class RLNcell:
         self.E_NMDA = 0.0
         self.E_GABA = -75
 
-        #Conductandes generales
         self.g_leak = 0.1
         self.g_c = 0.1
         self.p = 0.05
 
-        #Courants imposés
+        #Stim Current
         self.I_soma_stim = 0.0
 
-        #parametres de membranes
+        #Membrane parameter
         self.Cm = 1
 
         self.PERCENT = 0.1
@@ -170,13 +167,6 @@ class RLNcell:
         self.preThresh = 0.
         self.alpha = 0.072
         self.beta = 0.0066
-        # self.lastRelease = -1.e99
-        # self.Rinf = 0.
-        # self.Rtau = 0.
-        # self.Ra = 0.
-        # self.R0 = 0.
-        # self.R1 = 0.
-        # self.C = 0.
         self.mg = 1.
 
         #ODE vectors
@@ -221,13 +211,6 @@ class RLNcell:
         self.preThresh = 0.
         self.alpha = 0.072
         self.beta = 0.0066
-        # self.lastRelease = -1.e99
-        # self.Rinf = 0.
-        # self.Rtau = 0.
-        # self.Ra = 0.
-        # self.R0 = 0.
-        # self.R1 = 0.
-        # self.C = 0.
         self.lastRelease = -1.e99 * np.ones(self.NbODEs_s_AMPA, )
         self.Rinf = 0. * np.ones(self.NbODEs_s_AMPA, )
         self.Rtau = 0. * np.ones(self.NbODEs_s_AMPA, )
@@ -320,8 +303,6 @@ class RLNcell:
     def dH_OLM_dt(self, value):
         self.dydx[4] = value
 
-    # ajout IKNa
-
     @property
     def Na_intra_(self):
         return self.y[5]
@@ -339,12 +320,7 @@ class RLNcell:
         self.dydx[5] = value
 
 
-
-
-
-
-    def setParameters(self):
-        #[self applyInterfaceParameters:self]
+    def setParameters(self):  # parameter initialization
         self.y[0] = self.E_leak
         self.y[1] = self.alpha_h_OLM(self.y[0]) / (self.alpha_h_OLM(self.y[0]) + self.beta_h_OLM(self.y[0]))
         self.y[2] = self.alpha_n_OLM(self.y[0]) / (self.alpha_n_OLM(self.y[0]) + self.beta_n_OLM(self.y[0]))
@@ -352,13 +328,14 @@ class RLNcell:
         self.y[4] = self.H_inf_OLM(self.y[0]) * self.tau_H_OLM(self.y[0])
         self.y[5] = 9.5
 
-    def bruitGaussien(self,s, m):
+    def bruitGaussien(self,s, m):#fix the noise
         return np.random.normal(m, s)
 
     def I_leak_OLM(self,g_leak, PERCENT, V, E_leak):
         return self.bruitGaussien(PERCENT * g_leak, g_leak) * (V - E_leak)
 
     def updateParameters(self):
+        # update  equation for the current
         self.m_inf_Na = self.m_inf_Na_OLM(self.y[0])
         self.m_inf_Ca = self.m_inf_Ca_OLM(self.y[0])
         self.alpha_h = self.alpha_h_OLM(self.y[0])
@@ -369,21 +346,17 @@ class RLNcell:
         self.tau_H = self.tau_H_OLM(self.y[0])
         self.KCa_fonc = self.KCa_fonc_OLM(self.y[3])
 
+        # compute the current
         self.I_Na = self.I_Na_OLM(self.g_Na, self.m_inf_Na, self.y[1], self.y[0], self.E_Na)
         self.I_K = self.I_K_OLM(self.g_K, self.y[2], self.y[0], self.E_K)
         self.I_Ca = self.I_Ca_OLM(self.g_Ca, self.m_inf_Ca, self.y[0], self.E_Ca)
         self.I_KCa = self.I_KCa_OLM(self.g_KCa, self.KCa_fonc, self.y[0], self.E_K)
         self.I_h = self.I_h_OLM(self.g_h, self.y[4], self.y[0], self.E_K)
         self.I_leak = self.I_leak_OLM(self.g_leak, self.PERCENT, self.y[0], self.E_leak)
-
-        # self.I_soma_stim = [self getI_soma_stim];
-
-        # ajout IKNa definir y
-
         self.I_KNa = self.I_KNa_OLM(self.g_KNa, self.y[5], self.y[0], self.E_K)
 
-    def rk4(self):
-        self.yt = self.y+0. #y origine at t
+    def rk4(self):#Runge Kutta 4 solver
+        self.yt = self.y+0. # old y at t
         self.dydx1=self.derivT()#K1
         self.y = self.yt + self.dydx1 * self.dt / 2
         self.dydx2=self.derivT()#K2
@@ -394,7 +367,7 @@ class RLNcell:
         self.y =self.yt + self.dt/6. *(self.dydx1+2*self.dydx2+2*self.dydx3+self.dydx)#y at t+dt
 
     def derivT(self):
-        # ajout cinet Na intra
+        # ODE equations
         self.dV_OLM_dt = 1. / self.Cm * (
                     -self.I_KNa - self.I_Na - self.I_K - self.I_KCa - self.I_h - self.I_leak + self.I_soma_stim - self.I_synSoma)
 
@@ -404,7 +377,6 @@ class RLNcell:
         self.dNa_intra_dt = -self.alpha_Na * (self.A_s * (self.I_Na) ) - self.Rpump * (
                     Na_intra_power3 / (Na_intra_power3 + self.fifteenpoxer3) - (
                         Na_eq_power3 / (Na_eq_power3 + self.fifteenpoxer3)))
-        #!!!!! I_Na_s louche dans Inter_OLM_C.c
 
         self.dh_OLM_dt = 5. * (self.alpha_h * (1 - self.h_OLM_) - self.beta_h * self.h_OLM_)
         self.dn_OLM_dt = 5. * (self.alpha_n * (1 - self.n_OLM_) - self.beta_n * self.n_OLM_)
@@ -459,12 +431,11 @@ class RLNcell:
 
     # ---------------------------------------
     def F_fonc_OLM(self, Vpre):
-        return 1. / (1. + np.exp(-(Vpre - 0.) /  2))#1. / (1. + np.exp(-(Vpre - teta_syn) / K))
+        return 1. / (1. + np.exp(-(Vpre - 0.) /  2))
 
     def T_fonc_OLM(self, Vpre):
-        return 2.84 / (1 + np.exp(-(Vpre - 2.) / 5.))#Tmax / (1 + np.exp(-(Vpre - Vp) / Kp))
+        return 2.84 / (1 + np.exp(-(Vpre - 2.) / 5.))
 
-    # ---------------------------------------ajout IKNa
 
     def I_KNa_OLM(self, g_KNa_OLM, Na_intra, Vs, E_K):
         w = 0.37 / (1.0 + (38.7 / pow(Na_intra, 3.5)))
@@ -504,7 +475,6 @@ class RLNcell:
 
     def I_GABA2(self,Vpre):
         self.computeI_GABA(Vpre)
-        # Vd = np.array([self.VSoma() for s_d in PreSynaptic_Soma_Dend_GABA])
         return ((self.g_GABA * 0.1) / 1.25) * self.s_GABA * (self.VSoma() - self.E_GABA)
 
     def I_NMDA2(self,Vpre,t):
@@ -514,44 +484,32 @@ class RLNcell:
     def I_syn_OLM(self, I_GABA_OLM, I_AMPA_OLM, I_NMDA_OLM):
         return (I_GABA_OLM + I_AMPA_OLM + I_NMDA_OLM)
 
-    # trasmission synaptique
+    #ODE for synaptic AMPA
     def computeI_AMPA(self, Vpre):
         self.T_fonc = 1.1 * self.T_fonc_OLM(Vpre)
-        # rk4
-        self.s_AMPAo = self.s_AMPA + 0.  # y origine at t
+        self.s_AMPAo = self.s_AMPA + 0.
         self.ds_AMPA1 = self.derivs_AMPA_OLM()
-        # K1
         self.s_AMPA = self.s_AMPAo + self.ds_AMPA1 * self.dt / 2
         self.ds_AMPA2 = self.derivs_AMPA_OLM()
-        # K2
         self.s_AMPA = self.s_AMPAo + self.ds_AMPA2 * self.dt / 2
         self.ds_AMPA3 = self.derivs_AMPA_OLM()
-        # K3
         self.s_AMPA = self.s_AMPAo + self.ds_AMPA3 * self.dt
-        # K4
-        self.s_AMPA = self.s_AMPAo + self.dt / 6. * (self.ds_AMPA1 + 2 * self.ds_AMPA2 + 2 * self.ds_AMPA3 + self.derivs_AMPA_OLM())
-        # y at t+dt
         return self.s_AMPA
 
     def derivs_AMPA_OLM(self):
         return self.T_fonc * (1-self.s_AMPA) - 0.19 * self.s_AMPA
 
+    # ODE for synaptic GABA
     def computeI_GABA(self, Vpre):
         self.F_fonc = 1. * self.F_fonc_OLM(Vpre)
-        # rk4
-        self.s_GABAo = self.s_GABA + 0.  # y origine at t
+        self.s_GABAo = self.s_GABA + 0.
         self.ds_GABA1 = self.derivs_GABA_OLM()
-        # K1
         self.s_GABA = self.s_GABAo + self.ds_GABA1 * self.dt / 2
         self.ds_GABA2 = self.derivs_GABA_OLM()
-        # K2
         self.s_GABA = self.s_GABAo + self.ds_GABA2 * self.dt / 2
         self.ds_GABA3 = self.derivs_GABA_OLM()
-        # K3
         self.s_GABA = self.s_GABAo + self.ds_GABA3 * self.dt
-        # K4
         self.s_GABA = self.s_GABAo + self.dt / 6. * (self.ds_GABA1 + 2 * self.ds_GABA2 + 2 * self.ds_GABA3 + self.derivs_GABA_OLM())
-        # y at t+dt
         return self.s_GABA
 
     def derivs_GABA_OLM(self):
@@ -581,7 +539,7 @@ class RLNcell:
             else:
                 self.Ra[i] = self.R1[i] * np.exp(-1.0 * self.beta * (t - (self.lastRelease[i] + self.Cdur)))
 
-        self.B = 1. / (1 + np.exp(0.062 * (-Vs_d)) * self.mg / 10.)  # 3.57); # mgblock(Vm)
+        self.B = 1. / (1 + np.exp(0.062 * (-Vs_d)) * self.mg / 10.)
 
         return self.Ra * self.B * self.g_NMDA * (Vs_d - self.E_NMDA)
 
@@ -596,6 +554,5 @@ class RLNcell:
         self.I_synSoma = 0.
 
     def add_I_synSoma(self, I):
-        # self.I_synSoma += np.sum(I * vect)
         for i in range(len(I)):
             self.I_synSoma += I[i]

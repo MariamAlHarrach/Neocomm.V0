@@ -94,7 +94,7 @@ class VIPcell:
     def __init__(self):
         self.Type = 4
         self.Layer = 1
-        # pot de repos
+
         self.E_leak = -65
         self.E_Na = 55
         self.E_K = -90
@@ -103,7 +103,7 @@ class VIPcell:
         self.g_leak = 0.1
         self.g_K = 9
         self.g_Na = 35
-        self.g_KNa = 0#1.33
+        self.g_KNa = 0
 
         # synapses
         self.g_AMPA= 6
@@ -113,15 +113,14 @@ class VIPcell:
         self.E_NMDA = 0.0
         self.E_GABA = -75
 
-        #Conductandes generales
         self.g_c = 0.1
         self.p = 0.05
         self.noise = 0.
 
-        #Courants imposés
+        #Stim Current
         self.I_soma_stim = 0.0
 
-        #parametres de membranes
+        #Membrane parameter
         self.Cm = 1
 
         self.PERCENT = 0.1
@@ -133,7 +132,7 @@ class VIPcell:
         self.T = 273.16
         self.Q = self.F / (self.R * self.T)
         self.alpha_Na = 0.01
-        self.Rpump = 0.060  # * Publi: 0.018 * /
+        self.Rpump = 0.060
         self.Na_eq = 9.5
         self.A_s = 0.015
 
@@ -144,13 +143,6 @@ class VIPcell:
         self.preThresh = 0.
         self.alpha = 0.072
         self.beta = 0.0066
-        # self.lastRelease = -1.e99
-        # self.Rinf = 0.
-        # self.Rtau = 0.
-        # self.Ra = 0.
-        # self.R0 = 0.
-        # self.R1 = 0.
-        # self.C = 0.
         self.mg = 1.
 
         #ODE vectors
@@ -194,13 +186,6 @@ class VIPcell:
         self.preThresh = 0.
         self.alpha = 0.072
         self.beta = 0.0066
-        # self.lastRelease = -1.e99
-        # self.Rinf = 0.
-        # self.Rtau = 0.
-        # self.Ra = 0.
-        # self.R0 = 0.
-        # self.R1 = 0.
-        # self.C = 0.
         self.lastRelease = -1.e99 * np.ones(self.NbODEs_s_AMPA, )
         self.Rinf = 0. * np.ones(self.NbODEs_s_AMPA, )
         self.Rtau = 0. * np.ones(self.NbODEs_s_AMPA, )
@@ -261,7 +246,6 @@ class VIPcell:
     def dn_BIS_dt(self, value):
         self.dydx[2] = value
 
-    # ajout IKNa
     @property
     def Na_intra_(self):
         return self.y[3]
@@ -279,37 +263,35 @@ class VIPcell:
         self.dydx[3] = value
 
 
-    def setParameters(self):
-        #[self applyInterfaceParameters:self]
+    def setParameters(self): # parameter initialization
         self.y[0] = self.E_leak
         self.y[1] = self.alpha_h_BIS(self.y[0]) / (self.alpha_h_BIS(self.y[0]) + self.beta_h_BIS(self.y[0]))
         self.y[2] = self.alpha_n_BIS(self.y[0]) / (self.alpha_n_BIS(self.y[0]) + self.beta_n_BIS(self.y[0]))
         self.y[3] = 9.5
 
-    def bruitGaussien(self,s, m):
+    def bruitGaussien(self,s, m):#fix the noise
         return np.random.normal(m, s)
 
     def I_leak_BIS(self,g_leak, PERCENT, V, E_leak):
         return self.bruitGaussien(PERCENT * g_leak, g_leak) * (V - E_leak)
 
     def updateParameters(self):
+        # update  equation for the current
         self.m_inf = self.m_inf_BIS(self.y[0])
         self.alpha_h = self.alpha_h_BIS(self.y[0])
         self.alpha_n = self.alpha_n_BIS(self.y[0])
         self.beta_h = self.beta_h_BIS(self.y[0])
         self.beta_n = self.beta_n_BIS(self.y[0])
 
+        # compute the current
         self.I_Na = self.I_Na_BIS(self.g_Na, self.m_inf, self.y[1], self.y[0], self.E_Na)
         self.I_K = self.I_K_BIS(self.g_K, self.y[2], self.y[0], self.E_K)
         self.I_leak = self.I_leak_BIS(self.g_leak, self.PERCENT, self.y[0], self.E_leak)
-        # ajoutIKNa
         self.I_KNa = self.I_KNa_BIS(self.g_KNa, self.y[3], self.y[0], self.E_K)
 
-        # self.I_soma_stim = [self getI_soma_stim];
 
-
-    def rk4(self):
-        self.yt = self.y+0. #y origine at t
+    def rk4(self):#Runge Kutta 4 solver
+        self.yt = self.y+0. # old y at t
         self.dydx1=self.derivT()#K1
         self.y = self.yt + self.dydx1 * self.dt / 2
         self.dydx2=self.derivT()#K2
@@ -320,8 +302,8 @@ class VIPcell:
         self.y =self.yt + self.dt/6. *(self.dydx1+2*self.dydx2+2*self.dydx3+self.dydx)#y at t+dt
 
     def derivT(self):
+        # ODE equations
 
-        # avec IKNa
         self.dV_BIS_dt = 1. / self.Cm * (-self.I_KNa - self.I_Na - self.I_K - self.I_leak + self.I_soma_stim - self.I_synSoma)
         Na_intra_power3 = self.Na_intra_ * self.Na_intra_ * self.Na_intra_
         Na_eq_power3 = self.Na_eq * self.Na_eq * self.Na_eq
@@ -369,12 +351,11 @@ class VIPcell:
 
     def I_K_BIS(self, g_K_BIS, n_BIS, V_BIS, E_K_BIS):
         return g_K_BIS * n_BIS * n_BIS * n_BIS * n_BIS * (V_BIS - E_K_BIS)
-    # ajout IKNa
+
     def I_KNa_BIS(self, g_KNa_BIS, Na_intra, Vs, E_K):
         w = 0.37 / (1.0 + (38.7 / pow(Na_intra, 3.5)))
         return g_KNa_BIS * w * (Vs - E_K)
 
-    # -----------------------------------------------------
     # -----------------------------------------------------
 
     def I_AMPA(self, Vd):
@@ -382,7 +363,6 @@ class VIPcell:
 
     def I_AMPA2(self,Vpre):
         self.computeI_AMPA(Vpre)
-        # Vd = np.array([self.VSoma() for i in Vpre])
         return ((self.g_AMPA * 0.1) / 1.25) * self.s_AMPA * (self.VSoma() - self.E_AMPA)
 
     def I_GABA(self, Vd):
@@ -390,7 +370,6 @@ class VIPcell:
 
     def I_GABA2(self,Vpre):
         self.computeI_GABA(Vpre)
-        # Vd = np.array([self.VSoma() for i in Vpre])
         return ((self.g_GABA * 0.1) / 1.25) * self.s_GABA * (self.VSoma() - self.E_GABA)
 
     def I_NMDA2(self,Vpre,t):
@@ -401,49 +380,39 @@ class VIPcell:
     def I_syn_BIS(self, I_GABA_BIS, I_AMPA_BIS, I_NMDA_BIS):
         return (I_GABA_BIS + I_AMPA_BIS + I_NMDA_BIS)
 
-    # trasmission synaptique
+    #ODE for synaptic AMPA
     def computeI_AMPA(self, Vpre):
         self.T_fonc = 1.1 * self.T_fonc_BIS(Vpre)
-        # rk4
-        self.s_AMPAo = self.s_AMPA + 0.  # y origine at t
+        self.s_AMPAo = self.s_AMPA + 0.
         self.ds_AMPA1 = self.derivs_AMPA_BIS()
-        # K1
         self.s_AMPA = self.s_AMPAo + self.ds_AMPA1 * self.dt / 2
         self.ds_AMPA2 = self.derivs_AMPA_BIS()
-        # K2
         self.s_AMPA = self.s_AMPAo + self.ds_AMPA2 * self.dt / 2
         self.ds_AMPA3 = self.derivs_AMPA_BIS()
-        # K3
         self.s_AMPA = self.s_AMPAo + self.ds_AMPA3 * self.dt
-        # K4
         self.s_AMPA = self.s_AMPAo + self.dt / 6. * (self.ds_AMPA1 + 2 * self.ds_AMPA2 + 2 * self.ds_AMPA3 + self.derivs_AMPA_BIS())
-        # y at t+dt
         return self.s_AMPA
 
     def derivs_AMPA_BIS(self):
         return self.T_fonc * (1 - self.s_AMPA) - 0.19 * self.s_AMPA
 
+    # ODE for synaptic GABA
     def computeI_GABA(self, Vpre):
         self.F_fonc = 10. * self.F_fonc_BIS(Vpre)
-        # rk4
         self.s_GABAo = self.s_GABA + 0.  # y origine at t
         self.ds_GABA1 = self.derivs_GABA_BIS()
-        # K1
         self.s_GABA = self.s_GABAo + self.ds_GABA1 * self.dt / 2
         self.ds_GABA2 = self.derivs_GABA_BIS()
-        # K2
         self.s_GABA = self.s_GABAo + self.ds_GABA2 * self.dt / 2
         self.ds_GABA3 = self.derivs_GABA_BIS()
-        # K3
         self.s_GABA = self.s_GABAo + self.ds_GABA3 * self.dt
-        # K4
         self.s_GABA = self.s_GABAo + self.dt / 6. * (self.ds_GABA1 + 2 * self.ds_GABA2 + 2 * self.ds_GABA3 + self.derivs_GABA_BIS())
-        # y at t+dt
         return self.s_GABA
 
     def derivs_GABA_BIS(self):
         return self.F_fonc * (1. - self.s_GABA) - 0.07 * self.s_GABA
 
+    # equation for synaptic NMDA
     def computeI_NMDA(self, Vpre, t, Vs_d):
         for i in range(len(Vpre)):
             q = t - self.lastRelease[i] - self.Cdur
@@ -466,7 +435,7 @@ class VIPcell:
             else:
                 self.Ra[i] = self.R1[i] * np.exp(-1.0 * self.beta * (t - (self.lastRelease[i] + self.Cdur)))
 
-        self.B = 1. / (1 + np.exp(0.062 * (-Vs_d)) * self.mg / 10.)  # 3.57); # mgblock(Vm)
+        self.B = 1. / (1 + np.exp(0.062 * (-Vs_d)) * self.mg / 10.)
 
         return self.Ra * self.B * self.g_NMDA * (Vs_d - self.E_NMDA)
 
@@ -481,6 +450,5 @@ class VIPcell:
         self.I_synSoma = 0.
 
     def add_I_synSoma(self, I):
-        # self.I_synSoma += np.sum(I * vect)
         for i in range(len(I)):
             self.I_synSoma += I[i]

@@ -49,13 +49,13 @@ class CorticalColumn:
         self.NB_DPYR=int(np.sum(self.NB_PYR)*0.07)
         self.NB_Th=int(np.sum(self.NB_PYR)*0.07)
         self.List_C = np.array(
-            [[1, 1, 1, 1, 0],  # PC -> PC,PV,SST,VIP ,RLN  affinités de connexion entre cellules
+            [[1, 1, 1, 1, 0],  # PC -> PC,PV,SST,VIP ,RLN
              [1, 1, 0, 0, 0],  # PV -> PC,PV,SST,VIP ,RLN
              [1, 1, 0, 1, 1],  # SST -> PC,PV,SST,VIP ,RLN
              [0, 0, 1, 0, 0],   #VIP --> PC,PV,SST,VIP ,RLN
              [1, 1, 1, 1, 1]    #RLN --> PC,PV,SST,VIP ,RLN
              ], dtype=float)
-        # self.inputNB=int(np.sum(self.Layer_nbCells)/20) ## /2 fro realistic purpose and /10 for repetitive connections see Denoyer et al. 2020
+        # self.inputNB=int(np.sum(self.Layer_nbCells)/20) ## /2 for realistic purpose and /10 for repetitive connections see Denoyer et al. 2020
 
         self.Afferences = np.array([[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -86,8 +86,6 @@ class CorticalColumn:
         [0,0,0,0,25,10,3,4,18,15,6,6,6,18,0,5,2,2,11,0,1,1,1,10,0]])
 
         self.update_connections(self.Afferences)
-        # self.inputpercent=df.to_numpy()*self.inputNB/100
-        #print(self.inputpercent)
         self.Allconnexions=[]
 
         # Sim param
@@ -200,8 +198,7 @@ class CorticalColumn:
                     y[tt] = (1. - np.exp(-tp / tau)) * I_inj
                 if tt > nbOfSamplesStim:
                     y[tt] = (np.exp(-(tp - nbOfSamplesStim * self.dt) / tau)) * y[nbOfSamplesStim - 1]
-            # print(n)
-            # print(n*self.dt)
+
             if StimStart == 0:
                 N0 = int(self.nbEch / 2)
             else:
@@ -212,11 +209,10 @@ class CorticalColumn:
                 for j in range(nb):
                     y2 = np.zeros(self.nbEch)
                     for i in range(nbstim):
-                        # N0=int(npos[j])
-                        # N0 = int(self.nbEch / 2)
+
                         inst = int(np.round((np.random.normal(0, varianceStim))))
                         t0 = N0 + inst
-                        # print(inst)
+
                         if t0 == 0:
                             t0 = 0
                         elif t0 < 0:
@@ -235,17 +231,13 @@ class CorticalColumn:
 
         elif type == 'Periodic':
             # nb = int(1e-3 * self.T*freq) #frequency of fast ripples
-            # else:
-            #     np.random.seed()
+
             nb =  int(int(nbEch-int(StimStart / self.dt) - int(S_StimStop / self.dt))  / int(periode / self.dt))
 
-            # S_StimStop =int(S_StimStop / self.dt)
             nb_Stim_Signals = self.C.NB_DPYR
             nbOfSamplesStim = int(stimDur / self.dt)
-            # npos= int(StimStart / self.dt) + np.round(np.random.beta(2,2, nb)*S_StimStop/nb)+np.linspace(0,S_StimStop,nb) #position of stims
             npos = np.arange(int(StimStart / self.dt), nbEch, int(periode / self.dt), dtype=float)
             npos += (np.random.uniform(size=len(npos)) - 0.5) * (int(periode / self.dt) / 2)
-            # npos=self.nbEch/2
             Stim_Signals_out = np.zeros((nb_Stim_Signals, self.nbEch))
             varianceStim = varstim / self.dt
             t = np.arange(self.nbEch) * self.dt
@@ -255,8 +247,7 @@ class CorticalColumn:
                     y[tt] = (1. - np.exp(-tp / tau)) * I_inj
                 if tt > nbOfSamplesStim:
                     y[tt] = (np.exp(-(tp - nbOfSamplesStim * self.dt) / tau)) * y[nbOfSamplesStim - 1]
-            # print(n)
-            # print(n*self.dt)
+
             N = np.arange(StimStart, nbEch, int(periode / self.dt)) * self.Fs
 
             for St in range(nb_Stim_Signals):
@@ -265,10 +256,8 @@ class CorticalColumn:
                     y2 = np.zeros(self.nbEch)
                     for i in range(nbstim):
                         N0=int(npos[j])
-                        # N0 = int(self.nbEch / 2)
                         inst = int(np.round((np.random.normal(0, varianceStim))))
                         t0 = N0 + inst
-                        # print(inst)
                         if t0 == 0:
                             t0 = 0
                         elif t0 < 0:
@@ -285,10 +274,6 @@ class CorticalColumn:
                     yt += y2
                 Stim_Signals_out[St, :] = yt
 
-        # for j in range(nb):
-        #     N0 = int(npos[j])
-        #     self.Stim_Signals[:, int(N0-2*varianceStim):int(N0+2*varianceStim)]=Stim_Signals_out[:, int(N0-2*varianceStim):int(N0+2*varianceStim)]
-        #self.Stim_Signals = Stim_Signals_out + self.Stim_InputSignals
         self.Stim_Signals = Stim_Signals_out
         print('end computing stim signals')
         return self.Stim_Signals
@@ -619,10 +604,7 @@ class CorticalColumn:
 
 
     def runSim(self):
-
-        # self.UpdateModel()
         print('computing signals...')
-        # self.ApplyParamDict()
         self.t = np.arange(self.nbEch) * self.dt
 
         self.DpyrVs = np.zeros((np.sum(self.C.NB_DPYR), len(self.t)))
@@ -643,9 +625,6 @@ class CorticalColumn:
         self.pyrI_d = np.zeros((np.sum(self.C.NB_PYR), len(self.t)))
         self.pyrI_A = np.zeros((np.sum(self.C.NB_PYR), len(self.t)))
 
-
-
-
         self.PV_Vs = np.zeros((np.sum(self.C.NB_PV), len(self.t)))
         self.SST_Vs = np.zeros((np.sum(self.C.NB_SST), len(self.t)))
         self.VIP_Vs = np.zeros((np.sum(self.C.NB_VIP), len(self.t)))
@@ -655,64 +634,53 @@ class CorticalColumn:
 
 
 
-
-        # nbcells = np.sum(self.Layer_nbCells)
-        # layerS = np.zeros(nbcells,dtype=int)
-        # typeS = np.zeros(nbcells,dtype=int)
-        # indexS = np.zeros(nbcells,dtype=int)
-        # for ind in range(nbcells):
-        #     layerS[ind], typeS[ind], indexS[ind] = self.All2layer(ind, self.Layer_nbCells, self.C.NB_PYR, self.C.NB_PV, self.C.NB_SST, self.C.NB_VIP,
-        #                                        self.C.NB_RLN, self.List_celltypes)
-
-        if 1:
-            t0 = time.time()
-            self.t, self.pyrVs, self.pyrVd, self.pyrVa, self.PV_Vs, self.SST_Vs, self.VIP_Vs, self.RLN_Vs, self.DPYR_Vs, self.Th_Vs,self.pyrPPSE,self.pyrPPSI,self.pyrPPSI_s,self.pyrPPSI_a,self.pyrPPSE_Dpyr,self.pyrPPSE_Th,self.pyrI_S,self.pyrI_d, self.pyrI_A = ComputeSim.Model_compute(np.int(self.nbEch),
-                                                                                                                                                                                                                                                                                              np.float(self.dt),
-                                                                                                                                                                                                                                                                                              np.float(self.tps_start),
-                                                                                                                                                                                                                                                                                              self.Layer_nbCells,
-                                                                                                                                                                                                                                                                                              self.C.NB_PYR,
-                                                                                                                                                                                                                                                                                              self.C.NB_PV,
-                                                                                                                                                                                                                                                                                              self.C.NB_SST,
-                                                                                                                                                                                                                                                                                              self.C.NB_VIP,
-                                                                                                                                                                                                                                                                                              self.C.NB_RLN,
-                                                                                                                                                                                                                                                                                              self.C.NB_DPYR,
-                                                                                                                                                                                                                                                                                              self.C.NB_Th,
-                                                                                                                                                                                                                                                                                              np.int(self.inputNB),
-                                                                                                                                                                                                                                                                                              self.List_PYR,
-                                                                                                                                                                                                                                                                                              self.List_PV,
-                                                                                                                                                                                                                                                                                              self.List_SST,
-                                                                                                                                                                                                                                                                                              self.List_VIP,
-                                                                                                                                                                                                                                                                                              self.List_RLN,
-                                                                                                                                                                                                                                                                                              self.List_DPYR,
-                                                                                                                                                                                                                                                                                              self.List_Th,
-                                                                                                                                                                                                                                                                                              self.Stim_Signals,
-                                                                                                                                                                                                                                                                                              self.Stim_InputSignals,
-                                                                                                                                                                                                                                                                                              self.presynaptic_instance,
-                                                                                                                                                                                                                                                                                              self.pyrVs,
-                                                                                                                                                                                                                                                                                              self.pyrVd,
-                                                                                                                                                                                                                                                                                              self.pyrVa,
-                                                                                                                                                                                                                                                                                              self.PV_Vs,
-                                                                                                                                                                                                                                                                                              self.SST_Vs,
-                                                                                                                                                                                                                                                                                              self.VIP_Vs,
-                                                                                                                                                                                                                                                                                              self.RLN_Vs,
-                                                                                                                                                                                                                                                                                              self.DPYR_Vs,
-                                                                                                                                                                                                                                                                                              self.Th_Vs,
-                                                                                                                                                                                                                                                                                              self.C.layerS,
-                                                                                                                                                                                                                                                                                              self.C.typeS,
-                                                                                                                                                                                                                                                                                              self.C.indexS,
-                                                                                                                                                                                                                                                                                              self.t,
-                                                                                                                                                                                                                                                                                              np.int(self.seed),
-                                                                                                                                                                                                                                                                                              self.pyrPPSE,
-                                                                                                                                                                                                                                                                                              self.pyrPPSI,
-                                                                                                                                                                                                                                                                                              self.pyrPPSI_s,
-                                                                                                                                                                                                                                                                                              self.pyrPPSI_a,
-                                                                                                                                                                                                                                                                                              self.pyrPPSE_Dpyr,
-                                                                                                                                                                                                                                                                                              self.pyrPPSE_Th,
-                                                                                                                                                                                                                                                                                              self.pyrI_S,
-                                                                                                                                                                                                                                                                                              self.pyrI_d,
-                                                                                                                                                                                                                                                                                              self.pyrI_A)
-            print(time.time() - t0)
-            #run model
+        t0 = time.time()
+        self.t, self.pyrVs, self.pyrVd, self.pyrVa, self.PV_Vs, self.SST_Vs, self.VIP_Vs, self.RLN_Vs, self.DPYR_Vs, self.Th_Vs,self.pyrPPSE,self.pyrPPSI,self.pyrPPSI_s,self.pyrPPSI_a,self.pyrPPSE_Dpyr,self.pyrPPSE_Th,self.pyrI_S,self.pyrI_d, self.pyrI_A = ComputeSim.Model_compute(np.int32(self.nbEch),
+                                                                                                                                                                                                                                                                                          np.float64(self.dt),
+                                                                                                                                                                                                                                                                                          np.float64(self.tps_start),
+                                                                                                                                                                                                                                                                                          self.Layer_nbCells,
+                                                                                                                                                                                                                                                                                          self.C.NB_PYR,
+                                                                                                                                                                                                                                                                                          self.C.NB_PV,
+                                                                                                                                                                                                                                                                                          self.C.NB_SST,
+                                                                                                                                                                                                                                                                                          self.C.NB_VIP,
+                                                                                                                                                                                                                                                                                          self.C.NB_RLN,
+                                                                                                                                                                                                                                                                                          self.C.NB_DPYR,
+                                                                                                                                                                                                                                                                                          self.C.NB_Th,
+                                                                                                                                                                                                                                                                                          np.int32(self.inputNB),
+                                                                                                                                                                                                                                                                                          self.List_PYR,
+                                                                                                                                                                                                                                                                                          self.List_PV,
+                                                                                                                                                                                                                                                                                          self.List_SST,
+                                                                                                                                                                                                                                                                                          self.List_VIP,
+                                                                                                                                                                                                                                                                                          self.List_RLN,
+                                                                                                                                                                                                                                                                                          self.List_DPYR,
+                                                                                                                                                                                                                                                                                          self.List_Th,
+                                                                                                                                                                                                                                                                                          self.Stim_Signals,
+                                                                                                                                                                                                                                                                                          self.Stim_InputSignals,
+                                                                                                                                                                                                                                                                                          self.presynaptic_instance,
+                                                                                                                                                                                                                                                                                          self.pyrVs,
+                                                                                                                                                                                                                                                                                          self.pyrVd,
+                                                                                                                                                                                                                                                                                          self.pyrVa,
+                                                                                                                                                                                                                                                                                          self.PV_Vs,
+                                                                                                                                                                                                                                                                                          self.SST_Vs,
+                                                                                                                                                                                                                                                                                          self.VIP_Vs,
+                                                                                                                                                                                                                                                                                          self.RLN_Vs,
+                                                                                                                                                                                                                                                                                          self.DPYR_Vs,
+                                                                                                                                                                                                                                                                                          self.Th_Vs,
+                                                                                                                                                                                                                                                                                          self.C.layerS,
+                                                                                                                                                                                                                                                                                          self.C.typeS,
+                                                                                                                                                                                                                                                                                          self.C.indexS,
+                                                                                                                                                                                                                                                                                          self.t,
+                                                                                                                                                                                                                                                                                          np.int32(self.seed),
+                                                                                                                                                                                                                                                                                          self.pyrPPSE,
+                                                                                                                                                                                                                                                                                          self.pyrPPSI,
+                                                                                                                                                                                                                                                                                          self.pyrPPSI_s,
+                                                                                                                                                                                                                                                                                          self.pyrPPSI_a,
+                                                                                                                                                                                                                                                                                          self.pyrPPSE_Dpyr,
+                                                                                                                                                                                                                                                                                          self.pyrPPSE_Th,
+                                                                                                                                                                                                                                                                                          self.pyrI_S,
+                                                                                                                                                                                                                                                                                          self.pyrI_d,
+                                                                                                                                                                                                                                                                                          self.pyrI_A)
+        print(time.time() - t0)
 
 
         return (self.t, self.pyrVs, self.pyrVd,self.pyrVa, self.PV_Vs, self.SST_Vs, self.VIP_Vs,self.RLN_Vs, self.DPYR_Vs, self.Th_Vs,self.pyrPPSE,self.pyrPPSI,self.pyrPPSI_s,self.pyrPPSI_a,self.pyrPPSE_Dpyr,self.pyrPPSE_Th, self.pyrI_S,self.pyrI_d, self.pyrI_A)
@@ -749,46 +717,6 @@ class CorticalColumn:
             Vm = Vm * (self.dendriteSize + self.somaSize) / 2. * self.gc * Stotal
             self.LFP += Vm * 1e3
         return self.LFP
-
-
-    # def All2layer(self, indexall, NB_Cells, NB_pyr, NB_PV, NB_SST, NB_VIP, NB_RLN,celltype):  # tranform index of a cell in the network into layer and index in the layer
-    #     layer = []
-    #     new_i = []  # index in the layer
-    #     i = []  # index per type
-    #     if indexall < NB_Cells[0]:  # layer 1
-    #         layer = 0
-    #         new_i=indexall
-    #     elif indexall >= NB_Cells[0:1] and indexall < np.sum(NB_Cells[0:2]):  # layer 2/3
-    #         layer = 1
-    #         new_i = indexall - NB_Cells[0]
-    #     elif indexall >= np.sum(NB_Cells[0:2]) and indexall < np.sum(NB_Cells[0:3]):  # Layer 4
-    #         layer = 2
-    #         new_i = indexall - np.sum(NB_Cells[0:2])
-    #     elif indexall >= np.sum(NB_Cells[0:3]) and indexall < np.sum(NB_Cells[0:4]):  # Layer 5
-    #         layer = 3
-    #         new_i = indexall - np.sum(NB_Cells[0:3])
-    #     elif indexall >= np.sum(NB_Cells[0:4]) and indexall < np.sum(NB_Cells[0:5]):  # Layer 6
-    #         layer = 4
-    #         new_i = indexall - np.sum(NB_Cells[0:4])
-    #
-    #
-    #     type = int(celltype[layer][new_i])
-    #
-    #
-    #     if type == 0:  # PC
-    #         i = new_i + np.sum(NB_pyr[0:layer])
-    #     if type == 1:  # PV
-    #         i = new_i + np.sum(NB_PV[0:layer]) - np.sum(NB_pyr[layer])
-    #     if type == 2:  # SST
-    #         i = new_i + np.sum(NB_SST[0:layer]) - np.sum(NB_pyr[layer]) - np.sum(NB_PV[layer])
-    #     if type == 3:  # VIP
-    #         i = new_i + np.sum(NB_VIP[0:layer]) - np.sum(NB_pyr[layer]) - np.sum(NB_PV[layer]) - np.sum(NB_SST[layer])
-    #     if type == 4:  # RLN
-    #         i = new_i + np.sum(NB_RLN[0:layer]) - np.sum(NB_pyr[layer]) - np.sum(NB_PV[layer]) - np.sum(NB_SST[layer]) - np.sum(NB_VIP[layer])
-    #
-    #
-    #     return layer, type, i
-    #
 
 
     def get_PYR_Variables(self):
