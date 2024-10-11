@@ -55,7 +55,7 @@ class CorticalColumn:
              [0, 0, 1, 0, 0],   #VIP --> PC,PV,SST,VIP ,RLN
              [1, 1, 1, 1, 1]    #RLN --> PC,PV,SST,VIP ,RLN
              ], dtype=float)
-        # self.inputNB=int(np.sum(self.Layer_nbCells)/20) ## /2 for realistic purpose and /10 for repetitive connections see Denoyer et al. 2020
+
 
         self.Afferences = np.array([[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -187,8 +187,7 @@ class CorticalColumn:
             nb = 1
             nb_Stim_Signals = self.C.NB_DPYR
             nbOfSamplesStim = int(stimDur / self.dt)
-            npos = np.round(np.random.beta(2, 2, nb) * self.nbEch / nb) + np.linspace(0, self.nbEch, nb)  # position of HFOs
-            # npos=self.nbEch/2
+
             Stim_Signals_out = np.zeros((nb_Stim_Signals, self.nbEch))
             varianceStim = varstim / self.dt
             t = np.arange(self.nbEch) * self.dt
@@ -230,9 +229,6 @@ class CorticalColumn:
                 Stim_Signals_out[St, :] = yt
 
         elif type == 'Periodic':
-            # nb = int(1e-3 * self.T*freq) #frequency of fast ripples
-
-            nb =  int(int(nbEch-int(StimStart / self.dt) - int(S_StimStop / self.dt))  / int(periode / self.dt))
 
             nb_Stim_Signals = self.C.NB_DPYR
             nbOfSamplesStim = int(stimDur / self.dt)
@@ -248,7 +244,7 @@ class CorticalColumn:
                 if tt > nbOfSamplesStim:
                     y[tt] = (np.exp(-(tp - nbOfSamplesStim * self.dt) / tau)) * y[nbOfSamplesStim - 1]
 
-            N = np.arange(StimStart, nbEch, int(periode / self.dt)) * self.Fs
+
 
             for St in range(nb_Stim_Signals):
                 yt = np.zeros(self.nbEch)
@@ -286,8 +282,7 @@ class CorticalColumn:
         print('end computing input ')
         if not self.seed == 0:
             np.random.seed(self.seed)
-        # else:
-        #     np.random.seed()
+
         nb_Stim_Signals = self.NB_Th
         nbOfSamplesStim = int(stimDur / self.dt)  # nb of samples in one stimulation signal
         Stim_Signals_out = np.zeros((nb_Stim_Signals, self.nbEch))  # all signal of stim
@@ -420,9 +415,6 @@ class CorticalColumn:
             self.List_RLN[i].init_vector()
             count += 1
 
-        ###external input from th ad DPYR
-        # nbDpyr = self.inputNB * np.array([0.25, 0.06, 0.05,0.01])
-        # nbTh = self.inputNB * np.array([0.15,0.11,0.11,0.04])
 
         for l in range(1, 5):  # was 1 to 5 before to check if I corrected rigth
             for i in range(np.sum(self.C.NB_PYR[0:l]), self.C.NB_PYR[l] + np.sum(self.C.NB_PYR[0:l])):
@@ -512,7 +504,8 @@ class CorticalColumn:
         if center is None:
             center = np.array([self.dx / 2, self.dy / 2, self.dz / 2])
         distances = distance.cdist(self.CellPosition[0:self.Nb_all_cells - 1, :], [center], 'euclidean')
-        #print(len(distances))
+
+
         for i, d in enumerate(distances):
             if d <= radius:
                 if self.List_Neurone_PYR[i].Type == 1:
@@ -523,14 +516,12 @@ class CorticalColumn:
                     HypPyr_Idx.append(i)
 
         distances = distance.cdist(self.CellPosition[self.Nb_all_cells:self.NbInter+self.Nb_all_cells-1, :], [center], 'euclidean')
-        #print(len(distances))
+
         for i, d in enumerate(distances):
             if d <= radius:
                 self.List_Neurone_BAS[i].E_GABA =BASEGaba
 
-        #for k in range(self.Nb_all_cells):
-            #print('New')
-            #print(self.List_Neurone_PYR[k].E_GABA)
+
         return np.asarray(HypPyr_Idx)
 
     def Rest_clusters(self):
@@ -553,7 +544,7 @@ class CorticalColumn:
                         if not Ccenter == []:
                             s = np.asarray(Ccenter)
                             dis = np.sort(distance.cdist(s, [Cpos, Cpos], 'euclidean')[0, :])
-                            #print(dis)
+
                             if dis[0] > 2 * radius:
                                 choose = False
                         else:
@@ -693,12 +684,9 @@ class CorticalColumn:
         for l in range(1,5):
             for i in range(self.NB_PYR[l]):
                 CellPosition.append(self.Cellpos[l][i])
-        # for i, cellpos in enumerate(CellPosition):
-        #     cellpos[0] = cellpos[0] * self.somaSize
-        #     cellpos[1] = cellpos[1] * self.somaSize
 
         Distance_from_electrode = distance.cdist([electrode_pos, electrode_pos], CellPosition, 'euclidean')[0, :]
-        # vect direction??
+
         U = (CellPosition - electrode_pos) / Distance_from_electrode[:, None]
 
         Ssoma = np.pi * (self.somaSize / 2.) * ((self.somaSize / 2.) + self.somaSize * np.sqrt(5. / 4.))

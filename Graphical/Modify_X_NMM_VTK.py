@@ -11,7 +11,6 @@ from Graphical.Graph_viewer3D_VTK5 import Graph_viewer3D_VTK
 def Layout_grid_Label_Edit(label = ['None'],edit =['None']):
     widget = QWidget()
     layout_range = QVBoxLayout()
-    # layout_range.setContentsMargins(5,5,5,5)
 
     grid = QGridLayout()
     grid.setContentsMargins(5,5,5,5)
@@ -439,33 +438,12 @@ class Modify_X_NMM(QMainWindow):
         grid.addWidget(self.squarecells_e, count, 1)
         grid.addWidget(self.squarecellsApply_PB, count, 3 )
         count += 1
-        # grid.addWidget(ncells, count, 0)
-        # grid.addWidget(self.ncells_e, count, 1)
-        # grid.addWidget(self.ncellsApply_PB, count, 3 )
-        # count += 1
-        # grid.addWidget(connectedcells, count, 0)
-        # grid.addWidget(self.connectedcells_e, count, 1)
-        # grid.addWidget(self.connectedcellsApply_PB, count, 3 )
-        # count += 1
-        # grid.addWidget(randomcells, count, 0)
-        # grid.addWidget(self.randomcells_e, count, 1)
-        # grid.addWidget(self.randomcellsApply_PB, count, 3 )
         count += 1
 
-
-
-
-
-        # self.updateVTK = QPushButton('see selected cell onf graph')
-        # self.updateVTK.setFixedWidth(self.width_label * 3)
-        # self.updateVTK.clicked.connect(self.updateVTKclick)
 
         self.Apply = QPushButton('Apply')
         self.Apply.setFixedWidth(int(self.width_label*1.5))
         self.Apply.clicked.connect(self.Applyclick)
-        # self.updateVTK = QPushButton('see selected cell onf graph')
-        # self.updateVTK.setFixedWidth(self.width_label * 3)
-        # self.updateVTK.clicked.connect(self.updateVTKclick)
         layout_Actions.addLayout(self.grid_Selection_layoutClearAll)
         layout_Actions.addLayout(self.grid_Selection_layoutSelectAll)
         layout_Actions.addLayout(self.grid_Selection_layoutFromTo)
@@ -478,7 +456,6 @@ class Modify_X_NMM(QMainWindow):
         layout_Actions.addWidget(self.radiusselect)
         layout_Actions.addWidget(self.Apply)
         layout_Actions.addWidget(QLabel(''))
-        # layout_Actions.addWidget(self.updateVTK)
         layout_Actions.setAlignment(Qt.AlignTop)
 
 
@@ -530,15 +507,6 @@ class Modify_X_NMM(QMainWindow):
         self.Oneparam_list[-1].clicked.connect(self.setOneparam)
 
         self.layout_loadedpop.insertWidget(3,self.layout_NMM_var)
-        # self.layout_loadedpop.update()
-
-        # i=0
-        # for key, value in self.Dict_Param[idx].items():
-        #     self.Edit_List_NMM_var[i].setText(str(value))
-        #     i+=1
-        # self.Nameparam.setText(self.List_Names[idx])
-        # set_QPushButton_background_color(self.colorbutton, QColor(self.List_Color[idx]))
-        #
         for id_cb, CB in enumerate(self.list_pop):
             if idx == id_cb :
                 self.list_pop[id_cb] = True
@@ -669,8 +637,6 @@ class Modify_X_NMM(QMainWindow):
             line = f.readline()
 
         numero = 0
-        # if nbmodel >1 :
-        #     numero = NMM_number(nbmodel)
 
         model = {}
         while not ("::" in line or line == ''):
@@ -926,26 +892,3 @@ class Modify_X_NMM(QMainWindow):
         self.isclosed = True
         self.close()
 
-
-
-
-# def main():
-#     app = QApplication(sys.argv)
-#     pop = []
-#     for idx in range(10):
-#         pop.append(Model_Siouar_TargetGains.pop_Siouar())
-#         pop[idx].random_seeded(10)
-#     pop[0].A=10
-#     pop[1].A=5
-#     list_variable = Model_Siouar_TargetGains.get_Variable_Names()
-#
-#     ex = Modify_X_NMM(app,pop=pop,list_variable=list_variable)
-#     ex.setWindowTitle('Create Connectivity Matrix')
-#     # ex.showMaximized()
-#     ex.show()
-#     #ex.move(0, 0)
-#     sys.exit(app.exec_( ))
-#
-#
-# if __name__ == '__main__':
-#     main()

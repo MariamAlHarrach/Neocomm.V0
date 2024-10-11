@@ -88,12 +88,11 @@ class lfpViewer_EEG(QMainWindow):
         self.centralWidget = QWidget()
         self.setCentralWidget(self.centralWidget)
         self.mainVBOX_param_scene = QVBoxLayout()
-        # self.setMinimumHeight(700)
-        # self.setMinimumWidth(800)
+
         self.mascene = EEG_plot(self)
 
         self.paramPlotV = QVBoxLayout()
-        # self.horizontalSliders  = MySlider(Qt.Horizontal)
+
         self.horizontalSliders  = StyledTextScrollBar()
         self.horizontalSliders.text_pre = '0s'
         self.horizontalSliders.setFocusPolicy(Qt.StrongFocus)
@@ -114,7 +113,7 @@ class lfpViewer_EEG(QMainWindow):
         self.e_spacing = LineEdit('1')
         l_linewidth = QLabel('linewidth')
         self.e_linewidth = LineEdit('1')
-        # self.Color_Manage = QPushButton('Color Managment')
+
         self.Sig_Manage = QPushButton('Show signals')
         self.Filter_Manage = QPushButton('Filter Managment')
         self.Filter_apply = QCheckBox('Apply Filter')
@@ -126,7 +125,7 @@ class lfpViewer_EEG(QMainWindow):
 
         self.e_spacing.returnPressed.connect(self.update_plot)
         self.e_linewidth.returnPressed.connect(self.update_plot)
-        # self.Color_Manage.clicked.connect(self.Color_Manage_fun)
+
         self.Sig_Manage.clicked.connect(self.Sig_Manage_fun)
         self.Filter_Manage.clicked.connect(self.Filter_Manage_fun)
         self.Filter_apply.clicked.connect(self.Filter_apply_fun)
@@ -141,12 +140,9 @@ class lfpViewer_EEG(QMainWindow):
         self.paramPlot.addWidget(self.e_spacing)
         self.paramPlot.addWidget(l_linewidth)
         self.paramPlot.addWidget(self.e_linewidth)
-        # self.paramPlot.addWidget(self.Color_Manage)
+
         self.paramPlot.addWidget(self.Sig_Manage)
-        # self.paramPlot.addWidget(self.Filter_Manage)
-        # self.paramPlot.addWidget(self.Filter_apply)
-        # self.paramPlot.addWidget(self.Pop_up)
-        # self.paramPlot.addWidget(self.SaveRes_PB)
+
         self.paramPlot.addStretch(1)
 
         self.paramPlot2 = QHBoxLayout()
@@ -167,7 +163,6 @@ class lfpViewer_EEG(QMainWindow):
         self.paramPlotV.addWidget(self.horizontalSliders)
         self.paramPlotV.addLayout(self.paramPlot)
         self.paramPlotV.addLayout(self.paramPlot2)
-
 
 
 
@@ -227,9 +222,7 @@ class lfpViewer_EEG(QMainWindow):
         ts, te = self.get_ts_te()
         ts = np.round(self.t[ts])
         te = np.round(self.t[te - 1])
-        # self.horizontalSliders.setPreText(str(datetime.timedelta(seconds=int(np.round(self.t[0])))))
-        # self.horizontalSliders.setPostText(str(datetime.timedelta(seconds=int(np.round(self.t[-1])))))
-        # self.horizontalSliders.setSliderText(str(datetime.timedelta(seconds=int(ts))) + '/' + str(datetime.timedelta(seconds=int(te))))
+
         self.horizontalSliders.setPreText( "{:.3f}".format(self.t[0]/1000)  + ' s')
         self.horizontalSliders.setPostText("{:.3f}".format(self.t[-1]/1000) + ' s')
         self.horizontalSliders.setSliderText("{:.3f}".format(ts/1000)  + ' s' + '/' + "{:.3f}".format(te/1000) + ' s')
@@ -272,7 +265,6 @@ class lfpViewer_EEG(QMainWindow):
 
         print('inside draw ')
 
-
         self.Sigs_dict_o = copy.deepcopy(Sigs_dict)
 
         self.t = self.Sigs_dict_o.pop('t')
@@ -288,7 +280,6 @@ class lfpViewer_EEG(QMainWindow):
         self.Sigs_Color_o = Colors
         self.Sigs_Color = copy.deepcopy(self.Sigs_Color_o)
         self.LFP_Names = copy.deepcopy(self.LFP_Names_o)
-        # self.t = tp[cutint:]
         self.Fs = int(1 / (self.t[1] - self.t[0]))
 
         self.Sigs_dict = copy.deepcopy(self.Sigs_dict_o)
@@ -307,7 +298,6 @@ class lfpViewer_EEG(QMainWindow):
                 self.LFP_to_show = [True] * len(self.LFP_Names)
             else:
                 pass
-                #self.LFP_to_show = [True] * len(self.LFP_Names)
         else:
             self.LFP_to_show = [True] * len(self.LFP_Names)
 
@@ -346,8 +336,6 @@ class lfpViewer_EEG(QMainWindow):
             Norm = Filter_Management(self)
             if Norm.exec_():
                 self.Filter_apply_fun()
-                # self.mascene.modify_sigs()
-                # self.update_data()
         except:
             pass
 
@@ -409,8 +397,7 @@ class EEG_plot(QGraphicsView):
         self.setStyleSheet("border: 0px")
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
-        self.figure = Figure(facecolor='white')#Figure()
-        self.figure.canvas.mpl_connect('button_press_event', self.onclick)
+        self.figure = Figure(facecolor='white')
         self.canvas = FigureCanvas(self.figure)
         self.toolbar = NavigationToolbar(self.canvas,None)
 
@@ -425,7 +412,6 @@ class EEG_plot(QGraphicsView):
         self.axes = self.figure.add_subplot(111)
         self.axes.set_xlabel("Time (s)")
 
-        # self.canvas.setGeometry(0, 0, 1500, 500)
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.toolbar)
@@ -459,11 +445,6 @@ class EEG_plot(QGraphicsView):
         self.t = self.parent.t
         self.Fs= int(1/(self.t[1]-self.t[0]))
 
-    def onclick(self,event):
-        #     print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
-        #           ('double' if event.dblclick else 'single', event.button,
-        #            event.x, event.y, event.xdata, event.ydata))
-        pass
 
     def pick_handler(self,event):
         if event.mouseevent.button == 3:
@@ -482,7 +463,6 @@ class EEG_plot(QGraphicsView):
             HideAction.triggered.connect(lambda state, x=text  : self.HideAction_fun(state,x))
             ShowAction.triggered.connect(lambda state, x=text  : self.ShowAction_fun(state,x))
 
-            # print(event.mouseevent.x,event.mouseevent.y,self.height(),(self.parent.height()-100)*self.spacing)
             menu.exec_( event.guiEvent.globalPos())
 
 
@@ -538,7 +518,6 @@ class EEG_plot(QGraphicsView):
         self.axes.set_xlim((self.t[ts], self.t[te-1]))
         self.axes.xaxis.grid(which='both', color='#B0B0B0', linestyle='-', linewidth=0.5)
         self.canvas.draw_idle()
-        # self.canvas.draw()
 
     def update(self):
         win_num = self.parent.horizontalSliders.value()
@@ -588,12 +567,8 @@ class EEG_plot(QGraphicsView):
         self.axes.set_xlim((self.t[ts], self.t[te-1]))
 
 
-
-
-        # self.figure.set_size_inches(len(LFP_Names[:])*10, self.parent.width()/8)
         self.canvas.setGeometry(0, 0, self.parent.width()-100, int((self.parent.height()-100)*self.spacing))
         self.canvas.draw_idle()
-        # self.canvas.show()
 
 
 class Sig_Managment(QDialog):
@@ -614,20 +589,10 @@ class Sig_Managment(QDialog):
         grid = QGridLayout()
         layout_range.addLayout(grid)
 
-        # nvariable setting
-        # nvariable setting
         N = len(self.Names)
         sqrt_N = int(np.sqrt(N))
         nb_line = sqrt_N * 2
-        nb_column = int(np.ceil(N / nb_line))
 
-        # N = len(self.Names)
-        # sqrt_N = int(np.sqrt(N))
-        # if N<=100:
-        #     nb_column = 10
-        # else:
-        #     nb_column = 20
-        # nb_line = int(np.ceil(N / nb_column))
 
         self.CBs = []
         self.col_but = []
@@ -643,11 +608,6 @@ class Sig_Managment(QDialog):
             self.CBs.append(CB)
             grid.addWidget(CB, grid_ligne_ind, grid_col_ind)
             grid.addWidget(Label, grid_ligne_ind, grid_col_ind + 2)
-
-            # grid_col_ind += 3
-            # if grid_col_ind >= nb_column*3:
-            #     grid_col_ind = 0
-            #     grid_ligne_ind += 1
 
             grid_ligne_ind += 1
             if grid_ligne_ind >= nb_line:

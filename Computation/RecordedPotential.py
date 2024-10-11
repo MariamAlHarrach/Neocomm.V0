@@ -37,9 +37,6 @@ class LFP:
         l_AIS = np.array([self.C.l_Ais['1'],self.C.l_Ais['2'],self.C.l_Ais['3'],self.C.l_Ais['4']])   # soma height for layers 2/3,4,5 and 6 resp in micrometres
 
 
-        # # proportion of soma to total area
-        # p = [0.09, 0.04, 0.042, 0.062] #0.15
-
         #distance between sink and source
         self.lsd = l_soma / 2 + l_dend / 2
         self.lsa = l_soma / 2 + l_AIS / 2
@@ -90,16 +87,10 @@ class LFP:
         self.P=np.array([PC23,PC4,PC5,PC6])
 
     def getDiscPts(self, rad, step=0.01):
-
-
         i_coords, j_coords = np.meshgrid(np.arange(-rad,rad,step), np.arange(-rad,rad,step), indexing='ij')
-
         corrds = np.stack((i_coords.flatten(), j_coords.flatten(), 0*i_coords.flatten()) ).T
-
         dist = np.linalg.norm(corrds-np.array([0,0,0]),axis=1)
-
         D  = corrds[dist<=rad]
-
         return D
 
 
@@ -112,8 +103,6 @@ class LFP:
         y_grid = rad * np.sin(theta_grid)
         Cyl=np.stack((x_grid.flatten(), y_grid.flatten(), z_grid.flatten())).T
         return Cyl
-
-
 
     def get_electrode_coordinates(self, nbpots=1000):
         if self.r_e ==0:
@@ -130,7 +119,6 @@ class LFP:
             Ds =  np.matmul(D, np.matmul(rx, ry)) + self.electrode_pos
         return Ds
 
-
     def addnoise(self, lfp, SNR=35):
         Plfp = np.mean(lfp ** 2)
         Pnoise = Plfp / 10 ** (SNR / 10)
@@ -138,13 +126,10 @@ class LFP:
         lfpn = lfp + noise
         return lfpn
 
-
-
     def get_surfaces(self,Cellpos,List_celltypes,List_cellsubtypes):
         S_d = []
         S_S = []
         S_A = []
-
 
         target = Cell_morphology.Neuron(0, 1)
         ## update neuron and get coordinates
@@ -274,10 +259,8 @@ class LFP:
         pyrPPSE_Th=PPS['PPSE_Th']
         #positions
         Dis_d, Dis_d1, Dis_d23, Dis_d4, Dis_d5, Dis_d6, Dis_s_mid, Dis_a,Dis_dend = self.get_projection(Cellpos, List_celltypes,
-                                                                                               List_cellsubtypes,
+                                                                                              List_cellsubtypes,
                                                                                                Layertop_pos)
-
-        S_S,S_d,S_A= self.get_surfaces(Cellpos, List_celltypes, List_cellsubtypes)
 
         self.pyrI_S= I_all['pyrI_S']
         self.pyrI_d= I_all['pyrI_d']
@@ -286,22 +269,12 @@ class LFP:
         ###compute currents sources from voltage dependant channels
 
 
-
         if np.size(self.pyrI_S)==1:
-            # I_S = np.array([1e-8*S_S[k] * self.pyrI_S[0][0][k] for k in range(len(S_S))]) # PYRI in mA/cm2, I_S in mA
-            # I_d = np.array([1e-8*S_d[k] * self.pyrI_d[0][0][k] for k in range(len(S_S))])
-            # I_A = np.array([1e-8*S_A[k] * self.pyrI_A[0][0][k] for k in range(len(S_S))])
-
-
             I_S = 1e-8*self.pyrI_S[0][0]
             I_d =1e-8*self.pyrI_d[0][0]
             I_A =1e-8*self.pyrI_A[0][0]
 
         else:
-            # I_S = np.array([1e-8*S_S[k] * self.pyrI_S[k] for k in range(len(S_S))])
-            # I_d = np.array([1e-8*S_d[k] * self.pyrI_d[k] for k in range(len(S_S))])
-            # I_A = np.array([1e-8*S_A[k] * self.pyrI_A[k] for k in range(len(S_S))])
-
             I_S = 1e-8*self.pyrI_S
             I_d =1e-8*self.pyrI_d
             I_A =1e-8*self.pyrI_A
@@ -309,17 +282,6 @@ class LFP:
         LFPsoma = np.mean(np.dot(1 / Dis_s_mid,I_S), axis=0)
         LFPdend = np.mean(np.dot(1 / Dis_d, I_d), axis=0)
         LFPAIS = np.mean(np.dot(1 / Dis_a, I_A), axis=0)
-
-
-        ####Compute currents from synapses
-        # I_Syn_S = np.array([S_S[k] * pyrPPSI_s[k] for k in range(len(S_S))])
-        # I_Syn_A = np.array([S_A[k] * pyrPPSI_a[k] for k in range(len(S_S))])
-        # I_Syn_DE=np.zeros(np.shape(PPSE))
-        # I_Syn_DI=np.zeros(np.shape(PPSE))
-        #
-        # for l in range(5):
-        #     I_Syn_DE[l] = np.array([S_d[k] * PPSE[l][k] for k in range(len(S_S))])
-        #     I_Syn_DI[l] = np.array([S_d[k] * PPSI[l][k] for k in range(len(S_S))])
 
 
         LFP_SynD_E = np.zeros(PPSE[0].shape[1])

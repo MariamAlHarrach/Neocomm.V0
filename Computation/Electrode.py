@@ -1,10 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy import fft, ifft, signal
-import math
-from scipy.io import loadmat
-#plt.rcParams.update({'font.size': 26})
-
 
 class ElectrodeModel:
     def __init__(self, re=62.5, sigma=33e-5, Etype=0,cyl=0,h=2000):
@@ -51,9 +46,6 @@ class ElectrodeModel:
 
 
     def TF(self, w):
-        # He = np.zeros(shape=(1, len(w)), dtype=complex)
-        # for i in range(0, len(w)):
-        #     He[0, i] = 1 / ((self.Rs * self.Cs * 2 * np.pi * w[i] * 1j) + ((self.Cs * 2 * np.pi * w[i] * 1j) / (1 / self.Rct + (self.Cdl * 2 * np.pi * w[i] * 1j) ** self.n)) + 1)
         He = 1 / ((self.Rs * self.Cs * 2 * np.pi * w * 1j) + ((self.Cs * 2 * np.pi * w * 1j) / (1 / self.Rct + (self.Cdl * 2 * np.pi * w * 1j) ** self.n)) + 1)
 
         return He

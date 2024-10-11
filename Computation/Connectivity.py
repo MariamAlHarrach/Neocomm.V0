@@ -70,10 +70,6 @@ def IsConnected(Source, Sourcepos, Target, Targetpos, d,Col_L, Layer_d):
                     ConnPossans_nb += 1
 
 
-
-
-
-
             elif Target.subtype == 3:  # BPC
                 # cylinder
                 T_Z0_n = Targetpos[2] + Target.c1_down
@@ -87,7 +83,7 @@ def IsConnected(Source, Sourcepos, Target, Targetpos, d,Col_L, Layer_d):
                     ConnPossans += MeanMax(S_Z0, T_Z0_n, S_Z1, T_Z1_n)
                     ConnPossans_nb += 1
 
-                # cylinder haut
+                # cylinder high
                 T_Z0_n = Targetpos[2] + Target.c2_down
                 T_Z1_n = Targetpos[2] + Target.c2_up
                 o = find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, 10, d)
@@ -99,7 +95,7 @@ def IsConnected(Source, Sourcepos, Target, Targetpos, d,Col_L, Layer_d):
                     ConnPossans += MeanMax(S_Z0, T_Z0_n, S_Z1, T_Z1_n)
                     ConnPossans_nb += 1
 
-                # cylinder bas
+                # cylinder low
                 T_Z0_n = Targetpos[2] + Target.c3_down
                 T_Z1_n = Targetpos[2] + Target.c3_up
                 o = find_intersection_high_vectorize(S_Z0, S_Z1, T_Z0_n, T_Z1_n, Source.AX_w, 10, d)
@@ -350,7 +346,7 @@ def IsConnected(Source, Sourcepos, Target, Targetpos, d,Col_L, Layer_d):
                     ConnPossans += MeanMax(Stop_Z0, T_Z0_n, Stop_Z1, T_Z1_n)
                     ConnPossans_nb += 1
 
-                # cylinder bas
+                # cylinder low
                 T_Z0_n = Targetpos[2] + Target.c2_down
                 T_Z1_n = Targetpos[2] + Target.c2_up
                 o = find_intersection_high_vectorize(Sbot_Z0, Sbot_Z1, T_Z0_n, T_Z1_n, Source.AX_w, Target.r2, d)
@@ -371,7 +367,7 @@ def IsConnected(Source, Sourcepos, Target, Targetpos, d,Col_L, Layer_d):
                     ConnPossans += MeanMax(Stop_Z0, T_Z0_n, Stop_Z1, T_Z1_n)
                     ConnPossans_nb += 1
 
-                # cylinder haut
+                # cylinder high
                 T_Z0_n = Targetpos[2] + Target.c3_down
                 T_Z1_n = Targetpos[2] + Target.c3_up
 
@@ -520,15 +516,11 @@ def IsConnected(Source, Sourcepos, Target, Targetpos, d,Col_L, Layer_d):
         else:
             MeanPos = ConnPossans / ConnPossans_nb
 
-    ################
-    #        print(connected)
-    #        print(overlap)
     return connected, overlap, MeanPos
 
 
 def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=None):
     #C is column morphology
-
     if not seed == 0:
         np.random.seed(seed)
     #output dict
@@ -561,7 +553,6 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
     nbcellscum = np.append(0, nbcellscum)
     nbcellscum_mat = np.cumsum(np.array([nbcellscum[:-1], C.NB_PYR, C.NB_PV, C.NB_SST, C.NB_VIP, C.NB_RLN]), axis=0)
 
-    PCsubtypes_Per = np.cumsum(C.PCsubtypes_Per, axis=1)
     indexval = -1
 
     cm = np.zeros(nbcells, dtype=int)  # []
@@ -574,11 +565,8 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
     GABAcells = np.zeros(nbcells, dtype=int) - 1  # []
 
     SLayer_nbCells = np.cumsum(np.hstack((0, C.Layer_nbCells)))
-    # List_celltypes = copy.deepcopy(C.List_celltypes)
     List_cellsubtypes = copy.deepcopy(C.List_cellsubtypes)
     List_cellsubtypes_flatten = [item for sublist in List_cellsubtypes for item in sublist]
-    # t0 = time.time()
-    # ik = 1
     curcellnb = 0
     for l in range(len(C.Layer_nbCells)):
         for cell in range(int(C.Layer_nbCells[l])):
@@ -589,9 +577,6 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
                 func('current layer: ' + str(l+1) +' \ 5\n' +
                      'current layer: ' + str(cell+1) +' \ ' +str(int(C.Layer_nbCells[l]))+'\n' +
                      'placed number of cell: ' + format(curcellnb/nbcells, '.2f') )
-            # if indexval ==80:
-            #     a=1
-            # self.updateCell.something_happened.emit(indexval)
             indexval += 1
             cm = cm * 0
             dist = dist * 0
@@ -614,32 +599,6 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
 
             subtype = List_cellsubtypes[l][cell]
 
-            # # if Principal cell check subtypes
-            # if (C.List_celltypes[l][cell] == 0):  # getsubtype
-            #     if cell < PCsubtypes_Per[l][0]:
-            #         subtype = 0  # TPC
-            #     elif (cell >= PCsubtypes_Per[l][0]) and (cell < PCsubtypes_Per[l][1]):
-            #         subtype = 1  # UPC
-            #     elif (cell >= PCsubtypes_Per[l][1]) and (cell < PCsubtypes_Per[l][2]):
-            #         subtype = 2  # IPC
-            #     elif (cell >= PCsubtypes_Per[l][2]) and (cell < PCsubtypes_Per[l][3]):
-            #         subtype = 3  # BPC
-            #     elif (cell >= PCsubtypes_Per[l][3]) and (cell < PCsubtypes_Per[l][4]):
-            #         subtype = 4  # SSC
-            #
-            #     # print(l,cell,subtype,PCsubtypes_Per)
-            #     # print(List_cellsubtypes[l][cell])
-            #     List_cellsubtypes[l][cell] = subtype
-            #
-            # # if PV check is chandeliers or Basket
-            # elif (C.List_celltypes[l][cell] == 1):  # PV get subtype
-            #     if (cell - C.NB_PYR[l]) < C.NB_PV_BC[l]:
-            #         subtype = 0  # BC
-            #     else:
-            #         subtype = 1  # Chandelier
-            #     List_cellsubtypes[l][cell] = subtype
-            # else:
-            #     List_cellsubtypes[l][cell] = -1
 
             target.update_type(type=C.List_celltypes[l][cell], layer=l, subtype=subtype)
             index = 0
@@ -652,44 +611,15 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
 
                     if inputpercent[int(C.List_celltypes[subl][v] + 5 * subl), int(target.type + 5 * l)] == 0:
                         pass
-                        # cm[index] = 0
-                        # Weight[index] = -1
-                        # AMPAcells[index] = -1
-                        # GABAcells[index] = -1
-                        # GABASoma[index] = '0'
-                        # Zpos[index] = 0
 
 
                     else:
                         # remove auto connections except for PV [Deleuze et al. 2019,plos Bio]
                         if ((v == cell) and (subl == l) and (C.List_celltypes[l][cell] != 1)):
                             pass
-                            # cm[index] = 0
-                            # Weight[index] = -1
-                            # AMPAcells[index] = -1
-                            # GABAcells[index] = -1
-                            # GABASoma[index] = '0'
-                            # Zpos[index] = 0
 
                         else:
                             subtype = List_cellsubtypes[subl][v]
-                            # if (C.List_celltypes[subl][v] == 0):  # getsubtype
-                            #     if v < PCsubtypes_Per[subl][0]:
-                            #         subtype = 0  # TPC
-                            #     elif (v >= PCsubtypes_Per[subl][0]) and (v < PCsubtypes_Per[subl][1]):
-                            #         subtype = 1  # UPC
-                            #     elif (v >= PCsubtypes_Per[subl][1]) and (v < PCsubtypes_Per[subl][2]):
-                            #         subtype = 2  # IPC
-                            #     elif (v >= PCsubtypes_Per[subl][2]) and (v < PCsubtypes_Per[subl][3]):
-                            #         subtype = 3  # BPC
-                            #     elif (v >= PCsubtypes_Per[subl][3]) and (v < PCsubtypes_Per[subl][4]):
-                            #         subtype = 4  # SSC
-                            #
-                            # if (C.List_celltypes[subl][v] == 1):  # PV get subtype
-                            #     if (v - C.NB_PYR[subl]) < C.NB_PV_BC[subl]:
-                            #         subtype = 0  # BC
-                            #     else:
-                            #         subtype = 1  # Chandelier
                             if not Neighbor.is_Same(C.List_celltypes[subl][v],subl,subtype):
                                 Neighbor.update_type(type=C.List_celltypes[subl][v], layer=subl, subtype=subtype)
 
@@ -700,9 +630,6 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
                             if ConnPos == 0:  # not connected
                                 Layerconn = 0
                             else:
-                                # Layerconn = np.argwhere(np.sort(np.concatenate((Layertop_pos, np.array([ConnPos])),
-                                #                                                axis=0)) == ConnPos)  # 1--> layer 6,5 layer I
-                                # Layerconn = Layerconn[0][0] + 1
                                 if ConnPos <= Layertop_pos[0]:
                                     Layerconn = 1
                                 elif ConnPos <= Layertop_pos[1] and ConnPos >Layertop_pos[0]:
@@ -714,8 +641,6 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
                                 else:
                                     Layerconn = 5
 
-                                # if ConnPos < self.Cellpos[l][cell][2]: #if connection below soma center
-                                #     Layerconn=-1*Layerconn
                             Layerconn_l[index] = Layerconn
                             if isconnected == 1:
                                 cm[index] = 1
@@ -724,14 +649,11 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
 
                                 ####Fill presynatptic cell
                                 if Neighbor.type == 0:  # excitatory Input
-                                    AMPAcells[index] = v + SLayer_nbCells[subl]#np.sum(SLayer_nbCells[subl])
-                                    # GABAcells[index] = -1
+                                    AMPAcells[index] = v + SLayer_nbCells[subl]
                                     GABASoma[index] = '0'
                                 else:
                                     # inhibitory input
-                                    GABAcells[index] = v + SLayer_nbCells[subl]#np.sum(SLayer_nbCells[subl])
-                                    # AMPAcells[index] = -1
-
+                                    GABAcells[index] = v + SLayer_nbCells[subl]
                                     if target.type in [0]: #to PC
                                         if Neighbor.type == 1:  # from, PV
                                             if Neighbor.subtype == 0:  # if from Basket cell
@@ -742,13 +664,6 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
                                             GABASoma[index] = 'd'
                                     elif target.type in [1, 2, 3, 4]:
                                         GABASoma[index] = 's'
-                            # else:
-                            #     cm[index] = 0
-                            #     Weight[index] = -1
-                            #     AMPAcells[index] = -1
-                            #     GABAcells[index] = -1
-                            #     GABASoma[index] = '0'
-                            #     Zpos[index] = 0
 
                     index += 1
             #####Check afferences:##############
@@ -775,12 +690,8 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
                 Weight2 = Weight2[Weight2 > 0]
                 if Weight2.size == 0:
                     weigthmini = 1
-                    # print('RLN',l,cell,weigthmini)
                 else:
                     weigthmini = np.min(Weight2)
-                # weigthmini = np.min(Weight)
-                # if weigthmini < 1:
-                #     weigthmini = 1
 
                 for ind in range(nb):
                     pos = indice_[ind]
@@ -796,32 +707,12 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
                 for type in range(5):
                     if not int(Afferences[type + 5 * ll]) == 0:
 
-                        # NBrange = []
-                        # if type == 0:  # PC
-                        #     NBrange = np.array(range(nbcellscum[ll], nbcellscum[ll] + C.NB_PYR[ll]))
-                        # elif type == 1:  # PV
-                        #     NBrange = np.array(range(nbcellscum[ll] + C.NB_PYR[ll],
-                        #                              nbcellscum[ll] + C.NB_PYR[ll] + C.NB_PV[ll]))
-                        # elif type == 2:  # SST
-                        #     NBrange = np.array(range(nbcellscum[ll] + C.NB_PYR[ll] + C.NB_PV[ll],
-                        #                              nbcellscum[ll] + C.NB_PYR[ll] + C.NB_PV[ll] + C.NB_SST[
-                        #                                  ll]))
-                        # elif type == 3:  # VIP
-                        #     NBrange = np.array(
-                        #         range(nbcellscum[ll] + C.NB_PYR[ll] + C.NB_PV[ll] + C.NB_SST[ll],
-                        #               nbcellscum[ll] + C.NB_PYR[ll] + C.NB_PV[ll] + C.NB_SST[ll] + C.NB_VIP[
-                        #                   ll]))
-                        # elif type == 4:  # RLN
-                        #     NBrange = np.array(range(
-                        #         nbcellscum[ll] + C.NB_PYR[ll] + C.NB_PV[ll] + C.NB_SST[ll] + C.NB_VIP[ll],
-                        #         nbcellscum[ll] + C.NB_PYR[ll] + C.NB_PV[ll] + C.NB_SST[ll] +
-                        #         C.NB_VIP[ll] + C.NB_RLN[ll]))
                         NBrange = np.array(range(nbcellscum_mat[type,ll], nbcellscum_mat[type+1,ll]))
 
                         if len(NBrange) > 0:
                             somme_cm = np.sum(cm[NBrange])
                             if somme_cm > int(Afferences[
-                                                  type + 5 * ll]):  # np.sum([cm[j] for j in NBrange]) > int(Afferences[type+5*ll]):
+                                                  type + 5 * ll]):
                                 th = np.argsort(Weight[NBrange])[::-1]
                                 ind_th = NBrange[th[int(Afferences[type + 5 * ll]):]]
                                 Weight[ind_th] = 0
@@ -836,7 +727,6 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
                                 Weight2 = Weight2[Weight2 > 0]
                                 if Weight2.size == 0:
                                     weigthmini = 1
-                                    # print(ll,type,l,cell,weigthmini)
                                 else:
                                     weigthmini = np.min(Weight2)
 
@@ -846,11 +736,10 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
                                 indice_ = np.random.randint(0, len(NBrange), size=nb)
                                 for ind in range(nb):
                                     pos = NBrange[indice_[ind]]
-                                    # subtp = List_cellsubtypes[ll][pos-nbcellscum_mat[type,ll]]
                                     if not pos == indexval:
                                         cm[pos] = 1
                                         Weight[pos] = weigthmini
-                                        Zpos[pos] = Layerconn_l[pos]# 5 - ll  # add the layer of presynaptic cell
+                                        Zpos[pos] = Layerconn_l[pos]
                                         if type == 0: # From PC
                                             AMPAcells[pos] = pos
                                             GABAcells[pos] = -1
@@ -908,7 +797,6 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
             PreSynaptic_Soma_GABA_d.append(np.asarray(GABASoma_d_sparse))
             PreSynaptic_Soma_GABA_s.append(np.asarray(GABASoma_s_sparse))
             PreSynaptic_Soma_GABA_a.append(np.asarray(GABASoma_a_sparse))
-            # print(np.sum(PreSynaptic_Soma_GABA_d[-1]),np.sum(PreSynaptic_Soma_GABA_s[-1]),np.sum(PreSynaptic_Soma_GABA_a[-1]))
             PreSynapticWeight_AMPA.append(np.asarray(Weight_AMPA))
             PreSynapticWeight_GABA.append(np.asarray(Weight_GABA))
             PreSynapticPos_AMPA.append(np.asarray(Pos_AMPA))
@@ -933,8 +821,6 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
             else:
                 ExternalPreSynaptic_Cell_AMPA_Th.append(np.asarray([]))
 
-            # print('z',(time.time()-t0)/ik)
-            # ik +=1
 
     Conx['PreSynaptic_Cell_AMPA']=PreSynaptic_Cell_AMPA
     Conx['PreSynaptic_Cell_GABA']=PreSynaptic_Cell_GABA
@@ -956,7 +842,6 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
 
 @vectorize([float64(float64, float64, float64, float64, float64, float64, float64)])
 def find_intersection_high_vectorize(S_z0, S_z1, T_z0, T_z1, r1, r2, d):
-    # h = np.minimum(S_z1, T_z1) - np.maximum(S_z0, T_z0)
     if S_z1 <= T_z1:
         h = S_z1
     else:
@@ -991,7 +876,6 @@ def find_intersection_high_vectorize(S_z0, S_z1, T_z0, T_z1, r1, r2, d):
 
 @vectorize([float64(float64, float64, float64, float64, float64, float64, float64, float64, float64)])
 def find_conic_intersection_high_vectorize(S_z0, S_z1, T_z0, T_z1, r1, r2, d, step, cone_sens):
-    # h = np.minimum(S_z1, T_z1) - np.maximum(S_z0, T_z0)
     if S_z1 <= T_z1:
         h = S_z1
     else:

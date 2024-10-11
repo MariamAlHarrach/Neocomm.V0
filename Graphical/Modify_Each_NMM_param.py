@@ -121,7 +121,6 @@ class Modify_1_NMM(QMainWindow):
         self.groupscrollmodelselect.setLayout(self.layout_setup)
         self.groupscrollmodelselectGB.addWidget(scroll)
 
-        # self.praram.setLayout(self.scroll)
 
         #action
         layout_Actions = QVBoxLayout()
@@ -150,25 +149,3 @@ class Modify_1_NMM(QMainWindow):
         self.isclosed = True
         self.close()
 
-
-
-#
-# def main():
-#     app = QApplication(sys.argv)
-#     pop = []
-#     for idx in range(10):
-#         pop.append(Model_Siouar.pop_Siouar())
-#         pop[idx].random_seeded(10)
-#
-#     list_variable = Model_Siouar.get_Variable_Names()
-#
-#     ex = Modify_1_NMM(app,pop=pop,list_variable=list_variable)
-#     ex.setWindowTitle('Create Connectivity Matrix')
-#     # ex.showMaximized()
-#     ex.show()
-#     #ex.move(0, 0)
-#     sys.exit(app.exec_( ))
-#
-#
-# if __name__ == '__main__':
-#     main()

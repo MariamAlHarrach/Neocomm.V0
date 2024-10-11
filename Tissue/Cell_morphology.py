@@ -198,14 +198,10 @@ class Neuron:
             self.AIS_l=float(self.l_Ais[str(self.layer)])
 
             ####dendrites
-
-            # d1 first cylinder length
-            # d2 second cylinder length
-            # d3 third cylinder/cone length
-
             self.d1 = self.D1[str(self.layer)]
             self.d2 = self.D2[str(self.layer)]
             self.d3 = self.D3[str(self.layer)]
+
             # total dendrite length
             self.Adend_l = self.D1[str(self.layer)] + self.D2[str(self.layer)] + self.D3[str(self.layer)]
             #
@@ -325,7 +321,7 @@ class Neuron:
             return False
 
     def update_type(self, type, layer, subtype=None):
-        # print(type,layer,subtype)
+
         self.type = type
         self.layer = layer
         if subtype != None:
@@ -351,14 +347,10 @@ class Neuron:
             self.AIS_l = float(self.l_Ais[str(self.layer)])
 
             ####dendrites
-
-            # d1 first cylinder length
-            # d2 second cylinder length
-            # d3 third cylinder/cone length
-
             self.d1 = self.D1[str(self.layer)]
             self.d2 = self.D2[str(self.layer)]
             self.d3 = self.D3[str(self.layer)]
+
             # total dendrite length
             self.Adend_l = self.D1[str(self.layer)] + self.D2[str(self.layer)] + self.D3[str(self.layer)]
             #
@@ -407,8 +399,6 @@ class Neuron:
                 self.c3_down = -self.Adendrite_treelength[str(self.layer)] * 1 / 4
                 self.mid_dend = self.Adendrite_treelength[str(self.layer)] / 2 - self.Adendrite_treelength[
                     str(self.layer)] * 1 / 6
-
-
 
             elif self.subtype == 4:  # ssc
                 self.c1_up = self.Bdendrite_length[str(self.layer)] * 1 / 2

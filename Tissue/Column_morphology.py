@@ -116,8 +116,7 @@ class Column:
         self.VIPpercent = np.array([0, 0.40, 0.20, 0.15, 0.20])
         self.RLNpercent = np.array([1, 0.1, 0, 0, 0])
         self.GetCelltypes()
-        # self.Layer_nbCells = np.array([322,7524, 4656, 6114,
-        #                           12651]) / d  # markram et al. 2015total number of cells/neocortical column for each layer (L1-L2/3-L4-L5-L6)
+
 
 
 
@@ -127,11 +126,7 @@ class Column:
                                       [0.81,0.19,0,0,0],
                                       [0.39,0.17,0.20,0.24,0]]) #TPC,UPC,IPC,BPC,SSC
 
-        # self.PCsubtypes_Per=np.array([[0,0,0,0,0],
-        #                               [0.9*self.NB_PYR[1],0,0.1*self.NB_PYR[1],0,0],
-        #                               [0.5*self.NB_PYR[2],0.36*self.NB_PYR[2],0,0,0.14*self.NB_PYR[2]],
-        #                               [self.NB_PYR[3]*0.81,self.NB_PYR[3]*0.19,0,0,0],
-        #                               [self.NB_PYR[4]*0.39,self.NB_PYR[4]*0.17,self.NB_PYR[4]*0.20,self.NB_PYR[4]*0.24,0]]) #TPC,UPC,IPC,BPC,SSC
+
         self.PCsubtypes_Per= self.PCsubtypes_Percentage * self.NB_PYR[:, np.newaxis]
         self.List_celltypes = np.array([np.array( [0] * self.Layer_nbCells_pertype[0][l]
                                                   + [1] * self.Layer_nbCells_pertype[1][l]
@@ -204,16 +199,7 @@ class Column:
                             NB_SST = NB_SST,
                             NB_VIP = NB_VIP,
                             NB_RLN = NB_RLN)
-        # self.Layer_nbCells = np.array([322,7524, 4656, 6114,
-        #                           12651]) / d  # markram et al. 2015total number of cells/neocortical column for each layer (L1-L2/3-L4-L5-L6)
 
-
-
-        # self.PCsubtypes_Per=np.array([[0,0,0,0,0],
-        #                               [0.9*self.NB_PYR[1],0,0.1*self.NB_PYR[1],0,0],
-        #                               [0.5*self.NB_PYR[2],0.36*self.NB_PYR[2],0,0,0.14*self.NB_PYR[2]],
-        #                               [self.NB_PYR[3]*0.81,self.NB_PYR[3]*0.19,0,0,0],
-        #                               [self.NB_PYR[4]*0.39,self.NB_PYR[4]*0.17,self.NB_PYR[4]*0.20,self.NB_PYR[4]*0.24,0]]) #TPC,UPC,IPC,BPC,SSC
         self.PCsubtypes_Per= self.PCsubtypes_Percentage * self.NB_PYR[:, np.newaxis]
         self.List_celltypes =np.array([np.array(
             [0] * self.Layer_nbCells_pertype[0][l] + [1] * self.Layer_nbCells_pertype[1][l] + [2] *
