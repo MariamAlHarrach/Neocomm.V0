@@ -22,6 +22,8 @@ spec1 = [
 
 @jitclass(spec1)
 class presynaptic_class():
+    """Class Used for the synaptic connection between neurons
+    """
     def __init__(self, PreSynaptic_Cell_AMPA,
                  PreSynaptic_Cell_GABA,
                  PreSynaptic_Soma_AMPA,
@@ -98,6 +100,15 @@ def Model_compute(nbEch,
                  pyrI_d,
                  pyrI_A
 ):
+    """Global simulation of the current model
+    - update dt value
+    - update model's parameters
+    - init synaptic start current
+    - set the stimulation and the input signals
+    - compute synaptic currents
+    - compute RK4 solver
+    - save signals
+        """
 
 
     if not seed == 0:

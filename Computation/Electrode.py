@@ -2,6 +2,8 @@ import numpy as np
 from scipy import fft, ifft, signal
 
 class ElectrodeModel:
+    """Class corresponding to the intracortical electrode
+    """
     def __init__(self, re=62.5, sigma=33e-5, Etype=0,cyl=0,h=2000):
         # Electrode properties
         # re ---> electrode radius in micrometers

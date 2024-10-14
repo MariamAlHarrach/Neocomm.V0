@@ -23,6 +23,8 @@ class SenderObjectInt(QObject):
     something_happened = pyqtSignal(int)
 
 class CorticalColumn:
+    """ Class corresponding to the modeled cortical column
+    """
     updateTime = SenderObject()
     updateCell = SenderObjectInt()
     def __init__(self, type = 1):
@@ -103,6 +105,8 @@ class CorticalColumn:
         self.Conx={}
 
     def updateTissue(self, D, L, Curvature, Layer_d):
+        """ New tissue dimension
+        """
         self.D = D
         self.L = L
         self.Curvature = Curvature
@@ -129,6 +133,9 @@ class CorticalColumn:
                               NB_VIP=None,
                               NB_RLN=None
                               ):
+
+        """ New neuron density in the tissue
+        """
         self.C.update_morphology(Layer_nbCells=Layer_nbCells,
                                   PYRpercent=PYRpercent,
                                   PVpercent=PVpercent ,
@@ -162,9 +169,13 @@ class CorticalColumn:
         self.update_connections()
 
     def update_inputNB(self, division = 60):
-            self.inputNB = int(np.sum(self.Layer_nbCells) / division)
+        """ ratio for the density
+        """
+        self.inputNB = int(np.sum(self.Layer_nbCells) / division)
 
     def update_connections(self,matrice=None, fixed = False, division = 60):
+        """ compute the number of connection according to the connectivity matrix
+        """
         self.update_inputNB(division)
         if not matrice is None:
             self.Afferences = matrice
@@ -176,9 +187,13 @@ class CorticalColumn:
         self.Allconnexions=[]
 
     def createFlatCEllpos(self):
+        """ Acces to the neurons with a vector
+        """
         self.Cellposflat=np.vstack((self.Cellpos[0], self.Cellpos[1], self.Cellpos[2], self.Cellpos[3], self.Cellpos[4]))
 
     def Generate_Stims(self, I_inj=60, tau=4, stimDur=3, nbstim=5, varstim=12, freq=1.5,StimStart = 0,S_StimStop=1000,type='One shot', periode=200,nbEch=1000):
+        """ Compute distant cortex stimulation
+        """
         print('computing stim signals')
         if not self.seed == 0:
             np.random.seed(self.seed)
@@ -278,7 +293,8 @@ class CorticalColumn:
         self.seed=seed
 
     def Generate_input(self, I_inj=25, tau=4, stimDur=3, nbstim=5, deltamin=14, delta=18):
-
+        """ Compute thalamus input stimulation
+        """
         print('end computing input ')
         if not self.seed == 0:
             np.random.seed(self.seed)
@@ -320,7 +336,8 @@ class CorticalColumn:
         return self.Stim_InputSignals
 
     def create_cells(self):
-
+        """ Instanciate neuron models
+        """
         self.PreSynaptic_Cell_AMPA = self.Conx['PreSynaptic_Cell_AMPA']
         self.PreSynaptic_Cell_GABA = self.Conx['PreSynaptic_Cell_GABA']
         self.PreSynaptic_Soma_AMPA = self.Conx['PreSynaptic_Soma_AMPA']
@@ -471,6 +488,9 @@ class CorticalColumn:
         self.ImReady = True
 
     def Update_param_model(self):
+
+        """ Update neurons parameters values
+        """
         for l in range(0, 5):
             ind = 0
             for i in range(np.sum(self.NB_PYR[0:l]), self.NB_PYR[l] + np.sum(self.NB_PYR[0:l])):
@@ -497,6 +517,8 @@ class CorticalColumn:
 
 
     def Reset_states(self):
+        """ Reset ODE states
+        """
         self.UpdateModel()
 
     def create_Hyper_Cluster(self, radius=10, EGaba=-50,gGaba=25,gAMPA=8,gNMDA=0.15,BASEGaba=-75,center=None):
@@ -555,7 +577,8 @@ class CorticalColumn:
         return Cluster_lists
      ##################################################
     def UpdateModel(self):
-
+        """ Reset all model parameters
+        """
         for i in range(self.NB_Th):
             self.List_Th[i].init_I_syn()
             self.List_Th[i].init_vector()
@@ -595,6 +618,8 @@ class CorticalColumn:
 
 
     def runSim(self):
+        """ Apply the simualation
+        """
         print('computing signals...')
         self.t = np.arange(self.nbEch) * self.dt
 
@@ -708,17 +733,27 @@ class CorticalColumn:
 
 
     def get_PYR_Variables(self):
+        """ Get Pyr model parameter name for the GUI
+        """
         return PC_neo3.get_Variable_Names()
 
     def get_PV_Variables(self):
+        """ Get Pv model parameter name for the GUI
+        """
         return PV_neo.get_Variable_Names()
 
     def get_SST_Variables(self):
+        """ Get SST model parameter name for the GUI
+        """
         return SST_neo.get_Variable_Names()
 
     def get_VIP_Variables(self):
+        """ Get VIP model parameter name for the GUI
+        """
         return VIP_neo.get_Variable_Names()
 
     def get_RLN_Variables(self):
+        """ Get RLN model parameter name for the GUI
+        """
         return RLN_neo.get_Variable_Names()
 

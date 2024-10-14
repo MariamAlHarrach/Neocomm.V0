@@ -9,6 +9,8 @@ from Tissue import Cell_morphology
 
 @vectorize([float64(float64, float64, float64, float64)])
 def MeanMax(S_Z0, T_Z0_n, S_Z1, T_Z1_n):
+    """Compute limits for tissue
+        """
     if S_Z0 >= T_Z0_n:
         Z0_m = S_Z0
     else:
@@ -23,7 +25,8 @@ def MeanMax(S_Z0, T_Z0_n, S_Z1, T_Z1_n):
 
 
 def IsConnected(Source, Sourcepos, Target, Targetpos, d,Col_L, Layer_d):
-
+    """Determine if two neurons are possibly connected (overlapping)
+    """
     L=Col_L #column length
     step = 10.  # micrometeres
     connected = 0
@@ -520,6 +523,8 @@ def IsConnected(Source, Sourcepos, Target, Targetpos, d,Col_L, Layer_d):
 
 
 def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=None):
+    """Determine the connectivity matrice according to the numrber of connection wanted by the user
+    """
     #C is column morphology
     if not seed == 0:
         np.random.seed(seed)
@@ -842,6 +847,8 @@ def Create_Connectivity_Matrix(C,inputpercent,NB_DPYR,NB_Th,Cellpos,seed=0,func=
 
 @vectorize([float64(float64, float64, float64, float64, float64, float64, float64)])
 def find_intersection_high_vectorize(S_z0, S_z1, T_z0, T_z1, r1, r2, d):
+    """Find connection between cylinder
+    """
     if S_z1 <= T_z1:
         h = S_z1
     else:
@@ -876,6 +883,8 @@ def find_intersection_high_vectorize(S_z0, S_z1, T_z0, T_z1, r1, r2, d):
 
 @vectorize([float64(float64, float64, float64, float64, float64, float64, float64, float64, float64)])
 def find_conic_intersection_high_vectorize(S_z0, S_z1, T_z0, T_z1, r1, r2, d, step, cone_sens):
+    """Find connection between cylinder and cone
+    """
     if S_z1 <= T_z1:
         h = S_z1
     else:

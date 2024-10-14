@@ -9,6 +9,8 @@ import copy
 
 
 class Column:
+    """ Column morphology for different species: human/rats/mice
+    """
     def __init__(self,type=1):
         #Type: 0 for human, 1 for rats, 2 for mice
         Type=str(type)
@@ -346,10 +348,6 @@ class Column:
                 NB_SST[layer]) - np.sum(NB_VIP[layer])
 
         return layer, type, i
-
-
-if __name__ == '__main__':
-    Column = Column(type=0)
 
 
 

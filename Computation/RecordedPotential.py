@@ -9,6 +9,8 @@ from scipy.spatial import distance
 
 
 class LFP:
+    """Class used to compute the LFP out from membrane potential or PPS
+    """
     def __init__(self, Fs=25000, type=0,re=10,h=2000, tx=0, ty=0,pos=None):
         # Electrode properties
         #re: electrode radius

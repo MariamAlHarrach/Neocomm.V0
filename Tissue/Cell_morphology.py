@@ -8,6 +8,9 @@ import numpy as np
 
 
 class Neuron:
+    """Class Representing the reduced anatomy of each neuron
+    those anatomy are used to coputed the propability of connection between neurons according to the overlaping
+    """
     def __init__(self, type, layer, subtype=None):
         self.type = type
         self.layer = layer
@@ -460,9 +463,3 @@ class Neuron:
                 self.AX_up = self.axon_length['RLN2'] / 2
                 self.AX_down = -self.axon_length['RLN2'] / 2
                 self.AX_w = self.axon_width['RLN2'] / 2
-
-
-
-if __name__ == '__main__':
-    neuron = Neuron(type=0, layer=1)
-    print(neuron.dsoma)
