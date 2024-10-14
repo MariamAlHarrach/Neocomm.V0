@@ -516,65 +516,6 @@ class CorticalColumn:
 
 
 
-    def Reset_states(self):
-        """ Reset ODE states
-        """
-        self.UpdateModel()
-
-    def create_Hyper_Cluster(self, radius=10, EGaba=-50,gGaba=25,gAMPA=8,gNMDA=0.15,BASEGaba=-75,center=None):
-        HypPyr_Idx = []
-        if center is None:
-            center = np.array([self.dx / 2, self.dy / 2, self.dz / 2])
-        distances = distance.cdist(self.CellPosition[0:self.Nb_all_cells - 1, :], [center], 'euclidean')
-
-
-        for i, d in enumerate(distances):
-            if d <= radius:
-                if self.List_Neurone_PYR[i].Type == 1:
-                    self.List_Neurone_PYR[i].E_GABA = EGaba
-                    self.List_Neurone_PYR[i].g_GABA = gGaba
-                    self.List_Neurone_PYR[i].g_AMPA = gAMPA
-                    self.List_Neurone_PYR[i].g_NMDA = gNMDA
-                    HypPyr_Idx.append(i)
-
-        distances = distance.cdist(self.CellPosition[self.Nb_all_cells:self.NbInter+self.Nb_all_cells-1, :], [center], 'euclidean')
-
-        for i, d in enumerate(distances):
-            if d <= radius:
-                self.List_Neurone_BAS[i].E_GABA =BASEGaba
-
-
-        return np.asarray(HypPyr_Idx)
-
-    def Rest_clusters(self):
-        for i in range(self.Nb_all_cells):
-            if self.List_Neurone_PYR[i].Type == 1:
-                self.List_Neurone_PYR[i].E_GABA = -75
-
-    def create_mutiple_Hyper_Clusters(self, nbclusters=2, radius=50,EGaba=[-50,-50],gGaba=[25, 25]):
-        HypPyr_Idx = []
-        center = np.array([self.dx / 2, self.dy / 2, self.dz / 2])
-        Ccenter = []
-        Cluster_lists = []
-        for i in range(nbclusters):
-            choose = True
-            while (choose):
-                C = np.random.choice(range(self.Nb_of_PYR_Stimulated, self.Nb_PYR_Cells))
-                Cpos = self.CellPosition[C, :]
-                if np.abs(Cpos[0] - self.dx / 2) < (self.dx / 2 - (radius + 30)):
-                    if np.abs(Cpos[1] - self.dy / 2) < (self.dy / 2 - (radius + 30)):
-                        if not Ccenter == []:
-                            s = np.asarray(Ccenter)
-                            dis = np.sort(distance.cdist(s, [Cpos, Cpos], 'euclidean')[0, :])
-
-                            if dis[0] > 2 * radius:
-                                choose = False
-                        else:
-                            choose = False
-            Ccenter.append(Cpos)
-            cluster = self.create_Hyper_Cluster(radius, EGaba=EGaba[i],gGaba=gGaba[i],center=Cpos)
-            Cluster_lists.append(cluster)
-        return Cluster_lists
      ##################################################
     def UpdateModel(self):
         """ Reset all model parameters
@@ -700,36 +641,6 @@ class CorticalColumn:
 
 
         return (self.t, self.pyrVs, self.pyrVd,self.pyrVa, self.PV_Vs, self.SST_Vs, self.VIP_Vs,self.RLN_Vs, self.DPYR_Vs, self.Th_Vs,self.pyrPPSE,self.pyrPPSI,self.pyrPPSI_s,self.pyrPPSI_a,self.pyrPPSE_Dpyr,self.pyrPPSE_Th, self.pyrI_S,self.pyrI_d, self.pyrI_A)
-
-    def Compute_LFP_fonc(self):
-        electrode_pos = np.array([0, self.D/2+20, self.L/2])
-
-        #get principal cells positions
-        CellPosition=[]
-        for l in range(1,5):
-            for i in range(self.NB_PYR[l]):
-                CellPosition.append(self.Cellpos[l][i])
-
-        Distance_from_electrode = distance.cdist([electrode_pos, electrode_pos], CellPosition, 'euclidean')[0, :]
-
-        U = (CellPosition - electrode_pos) / Distance_from_electrode[:, None]
-
-        Ssoma = np.pi * (self.somaSize / 2.) * ((self.somaSize / 2.) + self.somaSize * np.sqrt(5. / 4.))
-        Stotal = Ssoma / self.p
-
-        # potentials
-        self.LFP = np.zeros(self.pyrVs.shape[1])
-        Vs_d = self.pyrVs - self.pyrVd
-
-        for k in range(self.Nb_PYR_Cells):
-            i = k + self.Nb_of_PYR_Stimulated
-            Vdi = np.zeros((len(Vs_d[i, :]), 3))
-            Vdi[:, 2] = Vs_d[i, :]
-            Vm = np.sum(Vdi * U[i, :], axis=1)
-            Vm = Vm / (4. * self.sigma * 1e-3 * np.pi * Distance_from_electrode[i] * Distance_from_electrode[i])
-            Vm = Vm * (self.dendriteSize + self.somaSize) / 2. * self.gc * Stotal
-            self.LFP += Vm * 1e3
-        return self.LFP
 
 
     def get_PYR_Variables(self):
